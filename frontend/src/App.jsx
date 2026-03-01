@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import FacialEmotionDetection from "./components/FacialEmotionDetection";
 import Calibration from "./components/Calibration";
+import DashboardHome from "./components/DashboardHome";
+import PresentationsPage from "./components/PresentationsPage";
+import SpeakerProfilesPage from "./components/SpeakerProfilesPage";
+import { useFacialEmotion } from "./context/FacialEmotionContext";
 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 const css = `
@@ -760,14 +763,10 @@ function loadScript(src) {
 async function initMP(videoEl, canvasEl, onResults) {
   await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js");
   await loadScript(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
-  );
-  await loadScript(
     "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
   );
 
   const { Hands, HAND_CONNECTIONS } = window;
-  const { Camera } = window;
   const { drawConnectors, drawLandmarks } = window;
 
   const hands = new Hands({
@@ -806,17 +805,23 @@ async function initMP(videoEl, canvasEl, onResults) {
     onResults(results, hasHands);
   });
 
-  const camera = new Camera(videoEl, {
-    onFrame: async () => {
-      // Check if video element is still valid
-      if (!videoEl || videoEl.readyState < 2) return;
+  let running = true;
+  let rafId = null;
+  const frameLoop = async () => {
+    if (!running) return;
+    if (videoEl && videoEl.readyState >= 2) {
       await hands.send({ image: videoEl });
+    }
+    rafId = requestAnimationFrame(frameLoop);
+  };
+  rafId = requestAnimationFrame(frameLoop);
+
+  return {
+    stop() {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
     },
-    width: 640,
-    height: 480,
-  });
-  camera.start();
-  return camera;
+  };
 }
 
 // ─── PDF.JS LOADER ────────────────────────────────────────────────────────────
@@ -829,6 +834,9 @@ async function loadPdfJs() {
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
   return window.pdfjsLib;
 }
+
+const PRESENTATIONS_STORAGE_KEY = "signbridge_presentations";
+const PROFILES_STORAGE_KEY = "signbridge_profiles";
 
 // ─── ICONS ───────────────────────────────────────────────────────────────────
 const ChevronLeft = () => (
@@ -875,6 +883,13 @@ const CameraIcon = () => (
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function SignSpeak() {
+  const {
+    stream: facialStream,
+    currentEmotion,
+    confidence,
+    isRunning: facialRunning,
+  } = useFacialEmotion();
+
   // WebSocket
   const [wsStatus, setWsStatus] = useState("disconnected");
   const wsRef = useRef(null);
@@ -884,7 +899,6 @@ export default function SignSpeak() {
   const canvasRef = useRef(null);
   //const cameraRef = useRef(null);
   const [handDetected, setHandDetected] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
   const currentLandmarksRef = useRef(null);
   const landmarkThrottleRef = useRef(0);
 
@@ -898,12 +912,6 @@ export default function SignSpeak() {
   const [recognized, setRecognized] = useState("");
   const recognizedTimerRef = useRef(null);
 
-  // Emotion detection
-  const [currentEmotion, setCurrentEmotion] = useState({
-    emotion: "neutral",
-    confidence: 0,
-  });
-
   // Captions
   const [captionWords, setCaptionWords] = useState([]);
 
@@ -916,7 +924,36 @@ export default function SignSpeak() {
   const slideCanvasRef = useRef(null);
 
   // Navigation
-  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "calibration"
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "present" | "presentations" | "speakerProfiles" | "calibration"
+  const [openUploadFlow, setOpenUploadFlow] = useState(false);
+  const [selectedPresentation, setSelectedPresentation] = useState(null);
+  const [presentations, setPresentations] = useState(() => {
+    try {
+      const raw = localStorage.getItem(PRESENTATIONS_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+      return [];
+    }
+  });
+  const [speakerProfiles, setSpeakerProfiles] = useState(() => {
+    try {
+      const raw = localStorage.getItem(PROFILES_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (_) {}
+    return [
+      {
+        id: crypto.randomUUID(),
+        name: "Alex",
+        gender: "Neutral",
+        accent: "American",
+        tone: "Confident",
+        rate: 65,
+        isDefault: true,
+      },
+    ];
+  });
 
   // Modals
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -951,6 +988,18 @@ export default function SignSpeak() {
     load();
     window.speechSynthesis.onvoiceschanged = load;
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PRESENTATIONS_STORAGE_KEY, JSON.stringify(presentations));
+    } catch (_) {}
+  }, [presentations]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(speakerProfiles));
+    } catch (_) {}
+  }, [speakerProfiles]);
 
   // ── WEBSOCKET ─────────────────────────────────────────────────
   const connectWs = useCallback(() => {
@@ -1029,19 +1078,34 @@ export default function SignSpeak() {
   // ── MEDIAPIPE ─────────────────────────────────────────────────
   const cameraRef = useRef(null);
   useEffect(() => {
+    if (activeTab !== "present") {
+      setHandDetected(false);
+      currentLandmarksRef.current = null;
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      if (cameraRef.current) {
+        try {
+          cameraRef.current.stop();
+        } catch (_) {}
+        cameraRef.current = null;
+      }
+      return;
+    }
+
     const vid = videoRef.current;
     const cvs = canvasRef.current;
-    if (!vid || !cvs) return;
+    if (!vid || !cvs || !facialStream) return;
+
+    if (vid.srcObject !== facialStream) {
+      vid.srcObject = facialStream;
+    }
+    vid.play().catch(() => {});
 
     const handleLoadedMetadata = () => {
-      setVideoReady(true);
     };
 
     vid.addEventListener("loadedmetadata", handleLoadedMetadata);
-    if (vid.readyState >= 2) {
-      setVideoReady(true);
-    }
-
     let cameraInstance = null;
     initMP(vid, cvs, (results, hasHands) => {
       setHandDetected(hasHands);
@@ -1077,8 +1141,9 @@ export default function SignSpeak() {
         }
         cameraRef.current = null;
       }
+      vid.srcObject = null;
     };
-  }, []);
+  }, [activeTab, facialStream]);
 
   // ── RECOGNITION BADGE ─────────────────────────────────────────
   function showRecog(text) {
@@ -1196,7 +1261,7 @@ export default function SignSpeak() {
         </div>
 
         <div className="header-right">
-          {activeTab === "dashboard" && (
+          {activeTab === "present" && (
             <>
               <button
                 className="btn btn-default"
@@ -1236,6 +1301,24 @@ export default function SignSpeak() {
           Dashboard
         </button>
         <button
+          className={`tab ${activeTab === "present" ? "active" : ""}`}
+          onClick={() => setActiveTab("present")}
+        >
+          Present
+        </button>
+        <button
+          className={`tab ${activeTab === "presentations" ? "active" : ""}`}
+          onClick={() => setActiveTab("presentations")}
+        >
+          Presentations
+        </button>
+        <button
+          className={`tab ${activeTab === "speakerProfiles" ? "active" : ""}`}
+          onClick={() => setActiveTab("speakerProfiles")}
+        >
+          Speaker Profiles
+        </button>
+        <button
           className={`tab ${activeTab === "calibration" ? "active" : ""}`}
           onClick={() => setActiveTab("calibration")}
         >
@@ -1243,12 +1326,40 @@ export default function SignSpeak() {
         </button>
       </div>
 
+      {activeTab === "dashboard" && (
+        <DashboardHome
+          onStartPresenting={() => setActiveTab("present")}
+          onNewPresentation={() => {
+            setOpenUploadFlow(true);
+            setActiveTab("presentations");
+          }}
+        />
+      )}
+
+      {activeTab === "presentations" && (
+        <PresentationsPage
+          openUploadFlow={openUploadFlow}
+          onUploadFlowHandled={() => setOpenUploadFlow(false)}
+          availableProfiles={speakerProfiles}
+          presentations={presentations}
+          setPresentations={setPresentations}
+          onPresentNow={(presentation) => {
+            setSelectedPresentation(presentation);
+            setActiveTab("present");
+          }}
+        />
+      )}
+
+      {activeTab === "speakerProfiles" && (
+        <SpeakerProfilesPage
+          profiles={speakerProfiles}
+          onProfilesChange={setSpeakerProfiles}
+        />
+      )}
+
       {/* MAIN */}
-      {/* Keep Dashboard always mounted but hidden when Calibration is active */}
-      <div
-        className="main"
-        style={{ display: activeTab === "calibration" ? "none" : "grid" }}
-      >
+      {activeTab === "present" && (
+      <div className="main">
         {/* LEFT: CAMERA */}
         <div className="left-panel">
           <div className="panel-label">
@@ -1271,16 +1382,6 @@ export default function SignSpeak() {
             />
             <canvas ref={canvasRef} className="camera-canvas" />
 
-            {/* Face emotion detection - processes video in background */}
-            {videoReady && videoRef.current && (
-              <FacialEmotionDetection
-                videoElement={videoRef.current}
-                onEmotionChange={(emotionData) => {
-                  setCurrentEmotion(emotionData);
-                }}
-              />
-            )}
-
             {recognized && (
               <div className={`recog-badge ${recognized ? "show" : ""}`}>
                 {recognized}
@@ -1288,7 +1389,7 @@ export default function SignSpeak() {
             )}
 
             {/* Emotion display - now includes neutral */}
-            {currentEmotion.emotion && currentEmotion.confidence > 0 && (
+            {currentEmotion && (
               <div
                 style={{
                   position: "absolute",
@@ -1305,7 +1406,25 @@ export default function SignSpeak() {
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
-                {currentEmotion.emotion} ({currentEmotion.confidence}%)
+                {currentEmotion} ({confidence}%)
+              </div>
+            )}
+
+            {!facialRunning && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(255,255,255,0.7)",
+                  color: "var(--text2)",
+                  fontSize: "13px",
+                  fontFamily: "'Geist Mono', monospace",
+                }}
+              >
+                Capturing neutral baseline...
               </div>
             )}
 
@@ -1429,6 +1548,7 @@ export default function SignSpeak() {
           </div>
         </div>
       </div>
+      )}
 
       {/* CALIBRATION TAB - Rendered separately to avoid interfering with Dashboard video */}
       {activeTab === "calibration" && (
