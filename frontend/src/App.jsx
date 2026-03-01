@@ -1175,6 +1175,48 @@ export default function SignSpeak() {
     window.speechSynthesis.speak(utt);
   }
 
+  // ── TEST GEMINI TTS ───────────────────────────────────────────
+  async function testGeminiTTS() {
+    const testText = "Hello! This is a test of the Gemini text-to-speech service with emotion-based styling.";
+    const testEmotion = "happiness";
+    
+    try {
+      const response = await fetch("http://localhost:8000/api/tts/synthesize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: testText,
+          emotion: testEmotion,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`TTS request failed: ${response.status} - ${errorText}`);
+      }
+
+      // Get audio blob
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      // Create audio element and play
+      const audio = new Audio(audioUrl);
+      audio.play();
+      
+      // Clean up URL after playback
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      console.log("TTS test successful!");
+    } catch (error) {
+      console.error("TTS test failed:", error);
+      alert(`TTS test failed: ${error.message}`);
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────
   const showRec = isRecordingStatic || isRecordingDynamic;
 
@@ -1198,6 +1240,13 @@ export default function SignSpeak() {
         <div className="header-right">
           {activeTab === "dashboard" && (
             <>
+              <button
+                className="btn btn-default"
+                onClick={testGeminiTTS}
+                title="Test Gemini TTS with a hardcoded sentence"
+              >
+                Test TTS
+              </button>
               <button
                 className="btn btn-default"
                 onClick={() => setVoiceOpen(true)}

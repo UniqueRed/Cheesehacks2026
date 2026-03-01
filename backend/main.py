@@ -1,9 +1,14 @@
 import asyncio
 import json
+import os
 import time
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from pathlib import Path
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from recognizer import GestureRecognizer
+from tts_service import TTSService
 
 app = FastAPI()
 
@@ -16,6 +21,30 @@ app.add_middleware(
 
 recognizer = GestureRecognizer()
 connections = {}
+
+# Auto-detect and set Google credentials if not already set
+if not os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+    # Look for credentials file in project root
+    project_root = Path(__file__).parent.parent
+    credentials_files = list(project_root.glob("signspeak-*.json"))
+    
+    if credentials_files:
+        # Use the first matching credentials file
+        creds_path = credentials_files[0].absolute()
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(creds_path)
+        print(f"✓ Auto-detected credentials: {creds_path}")
+    else:
+        print("⚠ No credentials file found. Looking for signspeak-*.json in project root.")
+
+# Initialize TTS service (will fail if credentials not set, but that's okay for now)
+tts_service = None
+try:
+    tts_service = TTSService()
+    print("✓ TTS service initialized successfully with Vertex AI")
+except Exception as e:
+    print(f"⚠ Warning: TTS service not initialized: {e}")
+    print("Make sure GOOGLE_APPLICATION_CREDENTIALS is set to use TTS features.")
+    print("Also ensure Vertex AI API is enabled in your GCP project.")
 
 MOTION_THRESHOLD = 0.015
 SIGN_COOLDOWN_SECONDS = 2.0  # seconds before same sign can fire again
@@ -41,6 +70,45 @@ class LandmarkProxy:
 
 def dicts_to_landmarks(lm_list):
     return [LandmarkProxy(d) for d in lm_list]
+
+
+class TTSRequest(BaseModel):
+    text: str
+    emotion: str = "neutral"
+
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "ok", "tts_available": tts_service is not None}
+
+
+@app.post("/api/tts/synthesize")
+async def synthesize_speech(request: TTSRequest):
+    """
+    Synthesize speech from text with emotion-based styling.
+    
+    Args:
+        request: TTSRequest with text and emotion fields
+    
+    Returns:
+        Audio file (WAV/Linear16 PCM) as response
+    """
+    if not tts_service:
+        raise HTTPException(
+            status_code=503,
+            detail="TTS service not available. Check GOOGLE_APPLICATION_CREDENTIALS."
+        )
+    
+    try:
+        audio_data = await tts_service.synthesize_speech(text=request.text, emotion=request.emotion)
+        return Response(
+            content=audio_data,
+            media_type="audio/wav",  # LINEAR16 is PCM WAV format
+            headers={"Content-Disposition": "inline; filename=speech.wav"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"TTS synthesis failed: {str(e)}")
 
 
 @app.websocket("/ws")

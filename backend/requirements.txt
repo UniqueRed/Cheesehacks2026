@@ -5,3 +5,4 @@ mediapipe
 opencv-python-headless
 numpy
 python-multipart
+google-cloud-texttospeech
