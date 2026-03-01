@@ -860,18 +860,20 @@ export default function SignSpeak() {
     confidence,
     isRunning: facialRunning,
   } = useFacialEmotion();
-  
+
   // Track the most recent non-neutral emotion in a ref (so it doesn't get stale)
   const latestNonNeutralEmotionRef = useRef("neutral");
-  
+
   // Update ref when detectedEmotion changes
   useEffect(() => {
     if (detectedEmotion !== "neutral") {
       latestNonNeutralEmotionRef.current = detectedEmotion;
-      console.log(`[App] detectedEmotion changed to: '${detectedEmotion}' (stored in ref)`);
+      console.log(
+        `[App] detectedEmotion changed to: '${detectedEmotion}' (stored in ref)`,
+      );
     }
   }, [detectedEmotion]);
-  
+
   // Debug: log when currentEmotion changes
   useEffect(() => {
     if (currentEmotion !== "neutral") {
@@ -1101,9 +1103,9 @@ export default function SignSpeak() {
         emotion: data.emotion,
         hasAudio: !!data.audio,
         audioLength: data.audio ? data.audio.length : 0,
-        audioFormat: data.audio_format
+        audioFormat: data.audio_format,
       });
-      
+
       // Only play if audio is provided from backend Gemini TTS
       if (data.audio) {
         console.log("[Frontend TTS] Audio present, processing...");
@@ -1117,44 +1119,70 @@ export default function SignSpeak() {
 
           console.log("[Frontend TTS] Decoding base64 audio...");
           // Decode base64 audio from Gemini TTS
-          const audioBytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
-          console.log("[Frontend TTS] Decoded audio bytes length:", audioBytes.length);
-          
-          const audioBlob = new Blob([audioBytes], { 
-            type: data.audio_format === "mp3" ? "audio/mpeg" : "audio/wav" 
+          const audioBytes = Uint8Array.from(atob(data.audio), (c) =>
+            c.charCodeAt(0),
+          );
+          console.log(
+            "[Frontend TTS] Decoded audio bytes length:",
+            audioBytes.length,
+          );
+
+          const audioBlob = new Blob([audioBytes], {
+            type: data.audio_format === "mp3" ? "audio/mpeg" : "audio/wav",
           });
-          console.log("[Frontend TTS] Created audio blob, type:", audioBlob.type, "size:", audioBlob.size);
-          
+          console.log(
+            "[Frontend TTS] Created audio blob, type:",
+            audioBlob.type,
+            "size:",
+            audioBlob.size,
+          );
+
           const audioUrl = URL.createObjectURL(audioBlob);
           console.log("[Frontend TTS] Created object URL:", audioUrl);
-          
+
           const audio = new Audio(audioUrl);
           console.log("[Frontend TTS] Created Audio element");
-          
+
           // Store reference for cancellation
           currentAudioRef.current = audio;
-          
+
           // Add event listeners for debugging
-          audio.addEventListener('loadstart', () => console.log("[Frontend TTS] Audio loadstart"));
-          audio.addEventListener('loadeddata', () => console.log("[Frontend TTS] Audio loadeddata"));
-          audio.addEventListener('canplay', () => console.log("[Frontend TTS] Audio canplay"));
-          audio.addEventListener('play', () => console.log("[Frontend TTS] Audio play event"));
-          audio.addEventListener('error', (e) => {
+          audio.addEventListener("loadstart", () =>
+            console.log("[Frontend TTS] Audio loadstart"),
+          );
+          audio.addEventListener("loadeddata", () =>
+            console.log("[Frontend TTS] Audio loadeddata"),
+          );
+          audio.addEventListener("canplay", () =>
+            console.log("[Frontend TTS] Audio canplay"),
+          );
+          audio.addEventListener("play", () =>
+            console.log("[Frontend TTS] Audio play event"),
+          );
+          audio.addEventListener("error", (e) => {
             console.error("[Frontend TTS] Audio error:", e);
             console.error("[Frontend TTS] Audio error details:", {
               code: audio.error?.code,
-              message: audio.error?.message
+              message: audio.error?.message,
             });
           });
-          
+
           console.log("[Frontend TTS] Attempting to play audio...");
-          audio.play().then(() => {
-            console.log("[Frontend TTS] Audio play() promise resolved - audio should be playing");
-          }).catch(err => {
-            console.error("[Frontend TTS] Error playing Gemini TTS audio:", err);
-            currentAudioRef.current = null;
-          });
-          
+          audio
+            .play()
+            .then(() => {
+              console.log(
+                "[Frontend TTS] Audio play() promise resolved - audio should be playing",
+              );
+            })
+            .catch((err) => {
+              console.error(
+                "[Frontend TTS] Error playing Gemini TTS audio:",
+                err,
+              );
+              currentAudioRef.current = null;
+            });
+
           // Clean up URL and reference after playback
           audio.onended = () => {
             console.log("[Frontend TTS] Audio playback ended");
@@ -1162,12 +1190,18 @@ export default function SignSpeak() {
             currentAudioRef.current = null;
           };
         } catch (err) {
-          console.error("[Frontend TTS] Error processing Gemini TTS audio:", err);
+          console.error(
+            "[Frontend TTS] Error processing Gemini TTS audio:",
+            err,
+          );
           console.error("[Frontend TTS] Error stack:", err.stack);
           currentAudioRef.current = null;
         }
       } else {
-        console.warn("[Frontend TTS] No audio received from backend Gemini TTS for chunk:", data.text);
+        console.warn(
+          "[Frontend TTS] No audio received from backend Gemini TTS for chunk:",
+          data.text,
+        );
         console.warn("[Frontend TTS] Message data:", data);
       }
     }
@@ -1252,22 +1286,27 @@ export default function SignSpeak() {
         );
         // Use detectedEmotion if non-neutral, otherwise use the most recent non-neutral from ref, otherwise currentEmotion
         // This prevents losing the emotion when it briefly flickers to neutral
-        const emotionToSend = detectedEmotion !== "neutral" 
-          ? detectedEmotion 
-          : (latestNonNeutralEmotionRef.current !== "neutral" 
-              ? latestNonNeutralEmotionRef.current 
-              : (currentEmotion || "neutral"));
-        
+        const emotionToSend =
+          detectedEmotion !== "neutral"
+            ? detectedEmotion
+            : latestNonNeutralEmotionRef.current !== "neutral"
+              ? latestNonNeutralEmotionRef.current
+              : currentEmotion || "neutral";
+
         // Debug: log emotion being sent (throttled to avoid spam)
         if (emotionToSend !== "neutral") {
-          console.log(`[Frontend Emotion] ✅ Sending NON-NEUTRAL emotion '${emotionToSend}' | detectedEmotion: '${detectedEmotion}' | ref: '${latestNonNeutralEmotionRef.current}' | currentEmotion: '${currentEmotion}'`);
+          console.log(
+            `[Frontend Emotion] ✅ Sending NON-NEUTRAL emotion '${emotionToSend}' | detectedEmotion: '${detectedEmotion}' | ref: '${latestNonNeutralEmotionRef.current}' | currentEmotion: '${currentEmotion}'`,
+          );
         } else if (Math.random() < 0.1) {
-          console.log(`[Frontend Emotion] Sending NEUTRAL | detectedEmotion: '${detectedEmotion}' | ref: '${latestNonNeutralEmotionRef.current}' | currentEmotion: '${currentEmotion}'`);
+          console.log(
+            `[Frontend Emotion] Sending NEUTRAL | detectedEmotion: '${detectedEmotion}' | ref: '${latestNonNeutralEmotionRef.current}' | currentEmotion: '${currentEmotion}'`,
+          );
         }
-        const message = { 
-          type: "landmarks", 
+        const message = {
+          type: "landmarks",
           landmarks: lmData,
-          emotion: emotionToSend
+          emotion: emotionToSend,
         };
         sendWs(message);
       } else {
@@ -1526,12 +1565,12 @@ export default function SignSpeak() {
         >
           Presentations
         </button>
-        <button
+        {/* <button
           className={`tab ${activeTab === "speakerProfiles" ? "active" : ""}`}
           onClick={() => setActiveTab("speakerProfiles")}
         >
           Speaker Profiles
-        </button>
+        </button> */}
         <button
           className={`tab ${activeTab === "calibration" ? "active" : ""}`}
           onClick={() => setActiveTab("calibration")}

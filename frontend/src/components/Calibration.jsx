@@ -4,7 +4,11 @@
  */
 
 import { useState, useRef, useEffect } from "react";
-import { THRESHOLDS, EMOTION_NAMES, EMOTION_INSTRUCTIONS } from "./FacialEmotionDetection";
+import {
+  THRESHOLDS,
+  EMOTION_NAMES,
+  EMOTION_INSTRUCTIONS,
+} from "./FacialEmotionDetection";
 import { useFacialEmotion } from "../context/FacialEmotionContext";
 import "./FacialEmotionDetection.css";
 
@@ -141,15 +145,17 @@ export default function Calibration() {
         const elapsed = Date.now() - calibrationStartTimeRef.current;
         const remaining = Math.max(
           0,
-          (EMOTION_CALIBRATION_DURATION_MS - elapsed) / 1000
+          (EMOTION_CALIBRATION_DURATION_MS - elapsed) / 1000,
         );
         setCalibrationRemainingSec(remaining);
-        setCalibrationProgress(Math.min(1, elapsed / EMOTION_CALIBRATION_DURATION_MS));
+        setCalibrationProgress(
+          Math.min(1, elapsed / EMOTION_CALIBRATION_DURATION_MS),
+        );
       } else if (calibrationPhase === "rest") {
         const restElapsed = Date.now() - calibrationRestStartRef.current;
         const remaining = Math.max(
           0,
-          (CALIBRATION_REST_DURATION_MS - restElapsed) / 1000
+          (CALIBRATION_REST_DURATION_MS - restElapsed) / 1000,
         );
         setCalibrationRemainingSec(remaining);
         setCalibrationProgress(0);
@@ -162,7 +168,7 @@ export default function Calibration() {
     try {
       localStorage.setItem(
         CALIBRATED_SET_KEY,
-        JSON.stringify(Array.from(calibratedEmotions))
+        JSON.stringify(Array.from(calibratedEmotions)),
       );
     } catch (_) {}
   }, [calibratedEmotions]);
@@ -192,10 +198,15 @@ export default function Calibration() {
                   samples.reduce((s, sample) => s + (sample[key] ?? 0), 0) /
                   samples.length;
               });
-              const updates = thresholdsFromAverages(calibratingEmotion, averages);
+              const updates = thresholdsFromAverages(
+                calibratingEmotion,
+                averages,
+              );
               const next = { ...calibratedThresholds, ...updates };
               updateThresholds(next);
-              setCalibratedEmotions((prev) => new Set([...prev, calibratingEmotion]));
+              setCalibratedEmotions(
+                (prev) => new Set([...prev, calibratingEmotion]),
+              );
               setUsingSavedCalibration(true);
             }
             setCalibratingEmotion(null);
@@ -224,7 +235,14 @@ export default function Calibration() {
         animationRef.current = null;
       }
     };
-  }, [calibratingEmotion, calibrationPhase, calibrationRound, calibratedThresholds, isRunning, updateThresholds]);
+  }, [
+    calibratingEmotion,
+    calibrationPhase,
+    calibrationRound,
+    calibratedThresholds,
+    isRunning,
+    updateThresholds,
+  ]);
 
   const phase = isRunning ? "running" : "calibrating";
 
@@ -262,7 +280,9 @@ export default function Calibration() {
                   </>
                 ) : (
                   <>
-                    Round {calibrationRound} of {ROUNDS_PER_EMOTION} — hold your &quot;{calibratingEmotion}&quot; expression naturally, slightly looking up as if presenting
+                    Round {calibrationRound} of {ROUNDS_PER_EMOTION} — hold your
+                    &quot;{calibratingEmotion}&quot; expression naturally,
+                    slightly looking up as if presenting
                     <div className="facial-emotion-calibration-progress-wrap">
                       <div
                         className="facial-emotion-calibration-progress-bar"
@@ -290,11 +310,14 @@ export default function Calibration() {
           <strong>Per-face calibration (optional but recommended)</strong>
           <div className="card" style={{ marginBottom: 10 }}>
             <span className="badge badge-ready">
-              {calibratedEmotions.size} of {EMOTION_NAMES.length} emotions calibrated
+              {calibratedEmotions.size} of {EMOTION_NAMES.length} emotions
+              calibrated
             </span>
           </div>
           <p className="facial-emotion-calibration-tip">
-            Tip: look slightly up as if presenting, not straight at the camera. Make each expression naturally — slight variation between rounds is good.
+            Tip: look slightly up as if presenting, not straight at the camera.
+            Make each expression naturally — slight variation between rounds is
+            good.
           </p>
           <div className="calibration-minimal">
             {EMOTION_NAMES.map((emotion) => {
@@ -305,7 +328,9 @@ export default function Calibration() {
                     <strong>{emotion}</strong>
                     <small>{EMOTION_INSTRUCTIONS[emotion]}</small>
                   </div>
-                  <span className={`badge ${isDone ? "badge-ready" : "badge-draft"}`}>
+                  <span
+                    className={`badge ${isDone ? "badge-ready" : "badge-draft"}`}
+                  >
                     {isDone ? "Calibrated" : "Not calibrated"}
                   </span>
                   <button
@@ -328,19 +353,6 @@ export default function Calibration() {
               );
             })}
           </div>
-
-          <button
-            type="button"
-            className="facial-emotion-export-btn"
-            onClick={() => {
-              try {
-                localStorage.setItem("facialEmotionThresholds", JSON.stringify(calibratedThresholds));
-              } catch (_) {}
-              updateThresholds(calibratedThresholds);
-            }}
-          >
-            Save Calibration
-          </button>
 
           <button
             type="button"
