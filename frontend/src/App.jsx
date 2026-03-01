@@ -1,4 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import Calibration from "./components/Calibration";
+import DashboardHome from "./components/DashboardHome";
+import PresentationsPage from "./components/PresentationsPage";
+import SpeakerProfilesPage from "./components/SpeakerProfilesPage";
+import { useFacialEmotion } from "./context/FacialEmotionContext";
 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 const css = `
@@ -96,6 +101,37 @@ const css = `
   }
 
   .header-right { display: flex; gap: 8px; align-items: center; }
+
+  /* ── TABS ───────────────────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text3);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: 'Literata', serif;
+  }
+
+  .tab:hover {
+    color: var(--text2);
+  }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
 
   /* ── MAIN ────────────────────────────────────────────────────── */
   .main {
@@ -664,17 +700,15 @@ function loadScript(src) {
 async function initMP(videoEl, canvasEl, onResults) {
   await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js");
   await loadScript(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js",
-  );
-  await loadScript(
     "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js",
   );
 
-  const { Hands, HAND_CONNECTIONS, Camera, drawConnectors, drawLandmarks } =
-    window;
+  const { Hands, HAND_CONNECTIONS } = window;
+  const { drawConnectors, drawLandmarks } = window;
 
   const hands = new Hands({
-    locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`,
+    locateFile: (file) =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
   });
   hands.setOptions({
     maxNumHands: 2,
@@ -683,6 +717,8 @@ async function initMP(videoEl, canvasEl, onResults) {
     minTrackingConfidence: 0.5,
   });
   hands.onResults((results) => {
+    // Check if canvas is still valid before drawing
+    if (!canvasEl || !canvasEl.getContext) return;
     const ctx = canvasEl.getContext("2d");
     canvasEl.width = results.image.width;
     canvasEl.height = results.image.height;
@@ -705,14 +741,23 @@ async function initMP(videoEl, canvasEl, onResults) {
     onResults(results, hasHands);
   });
 
-  const camera = new Camera(videoEl, {
-    onFrame: async () => {
+  let running = true;
+  let rafId = null;
+  const frameLoop = async () => {
+    if (!running) return;
+    if (videoEl && videoEl.readyState >= 2) {
       await hands.send({ image: videoEl });
+    }
+    rafId = requestAnimationFrame(frameLoop);
+  };
+  rafId = requestAnimationFrame(frameLoop);
+
+  return {
+    stop() {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
     },
-    width: 640,
-    height: 480,
-  });
-  camera.start();
+  };
 }
 
 async function loadPdfJs() {
@@ -724,6 +769,25 @@ async function loadPdfJs() {
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
   return window.pdfjsLib;
 }
+
+function dataUrlToArrayBuffer(dataUrl) {
+  if (typeof dataUrl !== "string" || !dataUrl.includes(",")) {
+    throw new Error("Invalid data URL");
+  }
+  const [meta, payload] = dataUrl.split(",", 2);
+  if (!meta.includes(";base64")) {
+    throw new Error("Unsupported data URL encoding");
+  }
+  const binary = atob(payload);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+const PRESENTATIONS_STORAGE_KEY = "signbridge_presentations";
+const PROFILES_STORAGE_KEY = "signbridge_profiles";
 
 // ─── ICONS ───────────────────────────────────────────────────────────────────
 const ChevronLeft = () => (
@@ -754,17 +818,17 @@ const ChevronRight = () => (
     <path d="M9 18l6-6-6-6" />
   </svg>
 );
-const SlidesIcon = () => (
+const CameraIcon = () => (
   <svg
-    width="28"
-    height="28"
+    width="32"
+    height="32"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="1.5"
   >
-    <rect x="2" y="3" width="20" height="14" rx="2" />
-    <path d="M8 21h8M12 17v4" />
+    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+    <circle cx="12" cy="13" r="4" />
   </svg>
 );
 
@@ -789,11 +853,20 @@ function TrainingProgress({ recordings, needed }) {
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function SignSpeak() {
+  const {
+    stream: facialStream,
+    currentEmotion,
+    confidence,
+    isRunning: facialRunning,
+  } = useFacialEmotion();
+
+  // WebSocket
   const [wsStatus, setWsStatus] = useState("disconnected");
   const wsRef = useRef(null);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  //const cameraRef = useRef(null);
   const [handDetected, setHandDetected] = useState(false);
   const currentLandmarksRef = useRef(null);
   const landmarkThrottleRef = useRef(0);
@@ -818,6 +891,40 @@ export default function SignSpeak() {
   const [currentPage, setCurrentPage] = useState(1);
   const slideCanvasRef = useRef(null);
 
+  // Navigation
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "present" | "presentations" | "speakerProfiles" | "calibration"
+  const [openUploadFlow, setOpenUploadFlow] = useState(false);
+  const [selectedPresentation, setSelectedPresentation] = useState(null);
+  const [presentationLoadError, setPresentationLoadError] = useState("");
+  const [presentations, setPresentations] = useState(() => {
+    try {
+      const raw = localStorage.getItem(PRESENTATIONS_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+      return [];
+    }
+  });
+  const [speakerProfiles, setSpeakerProfiles] = useState(() => {
+    try {
+      const raw = localStorage.getItem(PROFILES_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (_) {}
+    return [
+      {
+        id: crypto.randomUUID(),
+        name: "Alex",
+        gender: "Neutral",
+        accent: "American",
+        tone: "Confident",
+        rate: 65,
+        isDefault: true,
+      },
+    ];
+  });
+
+  // Modals
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [signsOpen, setSignsOpen] = useState(false);
   const [templates, setTemplates] = useState({});
@@ -907,7 +1014,25 @@ export default function SignSpeak() {
     window.speechSynthesis.onvoiceschanged = load;
   }, []);
 
-  // WebSocket
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        PRESENTATIONS_STORAGE_KEY,
+        JSON.stringify(presentations),
+      );
+    } catch (_) {}
+  }, [presentations]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        PROFILES_STORAGE_KEY,
+        JSON.stringify(speakerProfiles),
+      );
+    } catch (_) {}
+  }, [speakerProfiles]);
+
+  // ── WEBSOCKET ─────────────────────────────────────────────────
   const connectWs = useCallback(() => {
     const ws = new WebSocket("ws://localhost:8000/ws");
     wsRef.current = ws;
@@ -922,6 +1047,11 @@ export default function SignSpeak() {
   useEffect(() => {
     connectWs();
   }, [connectWs]);
+
+  // ── MESSAGE HANDLER ────────────────────────────────────────────
+  useEffect(() => {
+    isPresentingRef.current = isPresenting;
+  }, [isPresenting]);
 
   function handleMessage(data) {
     if (data.type === "match") {
@@ -973,15 +1103,42 @@ export default function SignSpeak() {
   }
 
   function sendWs(payload) {
-    if (wsRef.current?.readyState === WebSocket.OPEN)
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(payload));
+    }
   }
 
-  // MediaPipe
+  // ── MEDIAPIPE ─────────────────────────────────────────────────
+  const cameraRef = useRef(null);
   useEffect(() => {
+    if (activeTab !== "present") {
+      setHandDetected(false);
+      currentLandmarksRef.current = null;
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      if (cameraRef.current) {
+        try {
+          cameraRef.current.stop();
+        } catch (_) {}
+        cameraRef.current = null;
+      }
+      return;
+    }
+
     const vid = videoRef.current;
     const cvs = canvasRef.current;
-    if (!vid || !cvs) return;
+    if (!vid || !cvs || !facialStream) return;
+
+    if (vid.srcObject !== facialStream) {
+      vid.srcObject = facialStream;
+    }
+    vid.play().catch(() => {});
+
+    const handleLoadedMetadata = () => {};
+
+    vid.addEventListener("loadedmetadata", handleLoadedMetadata);
+    let cameraInstance = null;
     initMP(vid, cvs, (results, hasHands) => {
       setHandDetected(hasHands);
       if (hasHands) {
@@ -996,8 +1153,29 @@ export default function SignSpeak() {
       } else {
         currentLandmarksRef.current = null;
       }
-    });
-  }, []);
+    })
+      .then((camera) => {
+        cameraInstance = camera;
+        cameraRef.current = camera;
+      })
+      .catch((err) => {
+        console.error("MediaPipe initialization error:", err);
+      });
+
+    return () => {
+      vid.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      // Stop the camera when component unmounts or when switching away
+      if (cameraInstance) {
+        try {
+          cameraInstance.stop();
+        } catch (e) {
+          // Ignore errors when stopping
+        }
+        cameraRef.current = null;
+      }
+      vid.srcObject = null;
+    };
+  }, [activeTab, facialStream]);
 
   function showRecog(text) {
     setRecognized(text);
@@ -1023,17 +1201,70 @@ export default function SignSpeak() {
     }
   }
 
-  // PDF
-  async function handlePdfLoad(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+  // ── PDF ───────────────────────────────────────────────────────
+  async function loadPdfDocument(fileBuffer) {
     const pdfjsLib = await loadPdfJs();
-    const buf = await file.arrayBuffer();
-    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    const doc = await pdfjsLib.getDocument({ data: fileBuffer }).promise;
     setPdfDoc(doc);
     setCurrentPage(1);
     renderPage(doc, 1);
   }
+
+  async function handlePdfLoad(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const buf = await file.arrayBuffer();
+      await loadPdfDocument(buf);
+      setPresentationLoadError("");
+      setSelectedPresentation(null);
+    } catch (_) {
+      setPresentationLoadError("Could not load that PDF.");
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab !== "present" || !selectedPresentation) return;
+
+    let cancelled = false;
+    const loadSelectedPresentation = async () => {
+      const fileName = selectedPresentation.fileName || "";
+      const isPdf = fileName.toLowerCase().endsWith(".pdf");
+      if (!isPdf) {
+        if (!cancelled) {
+          setPdfDoc(null);
+          setCurrentPage(1);
+          setPresentationLoadError(
+            "This presentation type is not supported in viewer yet. Please upload a PDF.",
+          );
+        }
+        return;
+      }
+
+      try {
+        const buffer = dataUrlToArrayBuffer(selectedPresentation.fileData);
+        if (cancelled) return;
+        await loadPdfDocument(buffer);
+        if (!cancelled) setPresentationLoadError("");
+      } catch (_) {
+        if (!cancelled) {
+          setPdfDoc(null);
+          setCurrentPage(1);
+          setPresentationLoadError("Could not load the selected presentation.");
+        }
+      }
+    };
+
+    loadSelectedPresentation();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, selectedPresentation]);
+
+  useEffect(() => {
+    if (activeTab !== "present" || !pdfDoc || !slideCanvasRef.current) return;
+    renderPage(pdfDoc, currentPage);
+  }, [activeTab, pdfDoc, currentPage]);
 
   async function renderPage(doc, pageNum) {
     const page = await doc.getPage(pageNum);
@@ -1115,182 +1346,319 @@ export default function SignSpeak() {
 
         <div className="status-pill">
           <div
-            className={`status-dot ${wsStatus === "connected" ? "connected" : ""}`}
+            className={`status-dot ${
+              wsStatus === "connected" ? "connected" : ""
+            }`}
           />
           {wsStatus === "connected" ? "Connected" : "Disconnected"}
         </div>
 
         <div className="header-right">
-          <button
-            className="btn btn-default"
-            onClick={() => setVoiceOpen(true)}
-          >
-            Voice
-          </button>
-          <button
-            className="btn btn-default"
-            onClick={() => {
-              setSignsOpen(true);
-              sendWs({ type: "get_templates" });
-            }}
-          >
-            Saved Signs
-          </button>
-          <label className="btn btn-primary" style={{ cursor: "pointer" }}>
-            Load PDF
-            <input
-              className="sr-only"
-              type="file"
-              accept=".pdf"
-              onChange={handlePdfLoad}
-            />
-          </label>
+          {activeTab === "present" && (
+            <>
+              <button
+                className="btn btn-default"
+                onClick={() => setVoiceOpen(true)}
+              >
+                Voice
+              </button>
+              <button
+                className="btn btn-default"
+                onClick={() => {
+                  setSignsOpen(true);
+                  sendWs({ type: "get_templates" });
+                }}
+              >
+                Saved Signs
+              </button>
+              <label className="btn btn-primary" style={{ cursor: "pointer" }}>
+                Load PDF
+                <input
+                  className="sr-only"
+                  type="file"
+                  accept=".pdf"
+                  onChange={handlePdfLoad}
+                />
+              </label>
+            </>
+          )}
         </div>
       </header>
 
+      {/* TABS */}
+      <div className="tabs">
+        <button
+          className={`tab ${activeTab === "dashboard" ? "active" : ""}`}
+          onClick={() => setActiveTab("dashboard")}
+        >
+          Dashboard
+        </button>
+        <button
+          className={`tab ${activeTab === "present" ? "active" : ""}`}
+          onClick={() => setActiveTab("present")}
+        >
+          Present
+        </button>
+        <button
+          className={`tab ${activeTab === "presentations" ? "active" : ""}`}
+          onClick={() => setActiveTab("presentations")}
+        >
+          Presentations
+        </button>
+        <button
+          className={`tab ${activeTab === "speakerProfiles" ? "active" : ""}`}
+          onClick={() => setActiveTab("speakerProfiles")}
+        >
+          Speaker Profiles
+        </button>
+        <button
+          className={`tab ${activeTab === "calibration" ? "active" : ""}`}
+          onClick={() => setActiveTab("calibration")}
+        >
+          Calibration
+        </button>
+      </div>
+
+      {activeTab === "dashboard" && (
+        <DashboardHome
+          onStartPresenting={() => setActiveTab("present")}
+          onNewPresentation={() => {
+            setOpenUploadFlow(true);
+            setActiveTab("presentations");
+          }}
+        />
+      )}
+
+      {activeTab === "presentations" && (
+        <PresentationsPage
+          openUploadFlow={openUploadFlow}
+          onUploadFlowHandled={() => setOpenUploadFlow(false)}
+          availableProfiles={speakerProfiles}
+          presentations={presentations}
+          setPresentations={setPresentations}
+          onPresentNow={(presentation) => {
+            setSelectedPresentation(presentation);
+            setActiveTab("present");
+          }}
+        />
+      )}
+
+      {activeTab === "speakerProfiles" && (
+        <SpeakerProfilesPage
+          profiles={speakerProfiles}
+          onProfilesChange={setSpeakerProfiles}
+        />
+      )}
+
       {/* MAIN */}
-      <div className="main">
-        {/* LEFT */}
-        <div className="left-panel">
-          <div className="panel-label">
-            <span>Live Feed</span>
-            {handDetected && (
-              <div className="hand-badge">
-                <div className="hand-badge-dot" />
-                Hand detected
-              </div>
-            )}
-          </div>
-
-          <div className="camera-wrap">
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              style={{ display: "none" }}
-            />
-            <canvas ref={canvasRef} className="camera-canvas" />
-            {recognized && (
-              <div className={`recog-badge ${recognized ? "show" : ""}`}>
-                {recognized}
-              </div>
-            )}
-            {showRec && (
-              <div className="rec-badge">
-                <div className="rec-dot" />
-                {recLabel || "Recording"}
-              </div>
-            )}
-          </div>
-
-          <div className="record-section">
-            <div className="section-title">Record New Sign</div>
-            <input
-              className="input"
-              type="text"
-              placeholder="Sign name (e.g. hello, next…)"
-              value={signName}
-              onChange={(e) => setSignName(e.target.value)}
-            />
-            <div className="record-grid">
-              <button className="btn btn-default" onClick={recordStatic}>
-                📸 Static
-              </button>
-              <button
-                className={`btn ${isRecordingDynamic ? "btn-danger" : "btn-default"}`}
-                onClick={toggleDynamic}
-              >
-                {isRecordingDynamic ? "⏹ Stop" : "⏺ Dynamic"}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT */}
-        <div className="right-panel">
-          <div className="slide-area">
-            {!pdfDoc ? (
-              <div className="upload-empty">
-                <div className="upload-empty-icon">
-                  <SlidesIcon />
+      {activeTab === "present" && (
+        <div className="main">
+          {/* LEFT */}
+          <div className="left-panel">
+            <div className="panel-label">
+              <span>Live Feed</span>
+              {handDetected && (
+                <div className="hand-badge">
+                  <div className="hand-badge-dot" />
+                  Hand detected
                 </div>
-                <h3>Load your presentation</h3>
-                <p>
-                  Upload a PDF to display slides. Use the camera to sign and
-                  speak your content.
-                </p>
-                <label
-                  className="btn btn-primary"
-                  style={{ cursor: "pointer", marginTop: 4 }}
-                >
-                  Choose PDF
-                  <input
-                    className="sr-only"
-                    type="file"
-                    accept=".pdf"
-                    onChange={handlePdfLoad}
-                  />
-                </label>
-              </div>
-            ) : (
-              <canvas ref={slideCanvasRef} className="slide-canvas" />
-            )}
-          </div>
-
-          <div className="slide-controls">
-            <button
-              className="btn btn-icon"
-              onClick={prevSlide}
-              disabled={!pdfDoc || currentPage <= 1}
-            >
-              <ChevronLeft />
-            </button>
-            <span className="slide-count">
-              {pdfDoc ? `${currentPage} / ${pdfDoc.numPages}` : "— / —"}
-            </span>
-            <button
-              className="btn btn-icon"
-              onClick={nextSlide}
-              disabled={!pdfDoc || currentPage >= (pdfDoc?.numPages ?? 1)}
-            >
-              <ChevronRight />
-            </button>
-            <div className="slide-spacer" />
-            <button
-              className="btn btn-ghost"
-              style={{ fontSize: 12 }}
-              onClick={() => setCaptionWords([])}
-            >
-              Clear captions
-            </button>
-            <div className="divider" />
-            <button
-              className={`btn ${isPresenting ? "btn-danger" : "btn-success"}`}
-              onClick={togglePresenting}
-            >
-              {isPresenting ? "Stop Presenting" : "Start Presenting"}
-            </button>
-          </div>
-
-          <div className="captions">
-            <span className="cc-label">CC</span>
-            <div className="caption-text">
-              {captionWords.length === 0 ? (
-                <span className="caption-empty">
-                  Captions will appear here as you sign…
-                </span>
-              ) : (
-                captionWords.map((w, i) => (
-                  <span key={i} className="caption-word">
-                    {w}{" "}
-                  </span>
-                ))
               )}
             </div>
+
+            <div className="camera-wrap">
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                style={{ display: "none" }}
+              />
+              <canvas ref={canvasRef} className="camera-canvas" />
+              {recognized && (
+                <div className={`recog-badge ${recognized ? "show" : ""}`}>
+                  {recognized}
+                </div>
+              )}
+
+              {/* Emotion display - now includes neutral */}
+              {currentEmotion && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "10px",
+                    background: "var(--accent-bg)",
+                    border: "1px solid var(--accent-dim)",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "6px 12px",
+                    fontSize: "12px",
+                    fontFamily: "'Geist Mono', monospace",
+                    color: "var(--accent)",
+                    fontWeight: 500,
+                    boxShadow: "var(--shadow-sm)",
+                  }}
+                >
+                  {currentEmotion} ({confidence}%)
+                </div>
+              )}
+
+              {!facialRunning && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(255,255,255,0.7)",
+                    color: "var(--text2)",
+                    fontSize: "13px",
+                    fontFamily: "'Geist Mono', monospace",
+                  }}
+                >
+                  Capturing neutral baseline...
+                </div>
+              )}
+
+              {showRec && (
+                <div className="rec-badge">
+                  <div className="rec-dot" />
+                  {recLabel || "Recording"}
+                </div>
+              )}
+            </div>
+
+            <div className="record-section">
+              <div className="section-title">Record New Sign</div>
+              <input
+                className="input"
+                type="text"
+                placeholder="Sign name (e.g. hello, next…)"
+                value={signName}
+                onChange={(e) => setSignName(e.target.value)}
+              />
+              <div
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <button
+                  className={`btn ${isRecordingDynamic ? "btn-danger" : "btn-default"}`}
+                  onClick={toggleDynamic}
+                >
+                  {isRecordingDynamic ? "Stop" : "Dynamic"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT */}
+          <div className="right-panel">
+            <div className="slide-area">
+              {!pdfDoc ? (
+                <div className="upload-empty">
+                  <div className="upload-empty-icon"></div>
+                  <h3>Load your presentation</h3>
+                  <p>
+                    Upload a PDF to display slides. Use the camera to sign and
+                    speak your content.
+                  </p>
+                  {presentationLoadError && (
+                    <p style={{ marginTop: 8, color: "var(--red)" }}>
+                      {presentationLoadError}
+                    </p>
+                  )}
+                  <label
+                    className="btn btn-primary"
+                    style={{ cursor: "pointer", marginTop: 4 }}
+                  >
+                    Choose PDF
+                    <input
+                      className="sr-only"
+                      type="file"
+                      accept=".pdf"
+                      onChange={handlePdfLoad}
+                    />
+                  </label>
+                </div>
+              ) : (
+                <canvas ref={slideCanvasRef} className="slide-canvas" />
+              )}
+            </div>
+
+            <div className="slide-controls">
+              <button
+                className="btn btn-icon"
+                onClick={prevSlide}
+                disabled={!pdfDoc || currentPage <= 1}
+              >
+                <ChevronLeft />
+              </button>
+              <span className="slide-count">
+                {pdfDoc ? `${currentPage} / ${pdfDoc.numPages}` : "— / —"}
+              </span>
+              <button
+                className="btn btn-icon"
+                onClick={nextSlide}
+                disabled={!pdfDoc || currentPage >= (pdfDoc?.numPages ?? 1)}
+              >
+                <ChevronRight />
+              </button>
+              <div className="slide-spacer" />
+              <button
+                className="btn btn-ghost"
+                style={{ fontSize: 12 }}
+                onClick={() => setCaptionWords([])}
+              >
+                Clear captions
+              </button>
+              <div className="divider" />
+              <button
+                className={`btn ${isPresenting ? "btn-danger" : "btn-success"}`}
+                onClick={togglePresenting}
+              >
+                {isPresenting ? "Stop Presenting" : "Start Presenting"}
+              </button>
+            </div>
+
+            <div className="captions">
+              <span className="cc-label">CC</span>
+              <div className="caption-text">
+                {captionWords.length === 0 ? (
+                  <span className="caption-empty">
+                    Captions will appear here as you sign…
+                  </span>
+                ) : (
+                  captionWords.map((w, i) => (
+                    <span key={i} className="caption-word">
+                      {w}{" "}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* CALIBRATION TAB - Rendered separately to avoid interfering with Dashboard video */}
+      {activeTab === "calibration" && (
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            padding: "24px",
+            maxWidth: "800px",
+            margin: "0 auto",
+            width: "100%",
+          }}
+        >
+          <Calibration />
+        </div>
+      )}
 
       {/* VOICE MODAL */}
       {voiceOpen && (
