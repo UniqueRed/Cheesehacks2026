@@ -265,6 +265,20 @@
   color: #a0d0ff;
 }
 
+.facial-emotion-debug-bar-wrap {
+  flex: 1;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.facial-emotion-debug-bar {
+  height: 100%;
+  background: #6af;
+  transition: width 0.1s;
+}
+
 .facial-emotion-debug-value {
   color: #90ee90;
   min-width: 4ch;

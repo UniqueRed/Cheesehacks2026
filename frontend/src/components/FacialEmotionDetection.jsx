@@ -32,7 +32,7 @@ import "./FacialEmotionDetection.css";
 // ============ THRESHOLDS — tune these for your face ============
 // All names now match the FER7 emotions used in classifyEmotion below.
 // Lower values = more sensitive. Increase if jumping too much.
-const THRESHOLDS = {
+export const THRESHOLDS = {
   // Stability: how many consecutive frames must agree before switching emotion
   STABILITY_FRAMES: 8,
 
@@ -75,7 +75,7 @@ const CALIBRATION_REST_DURATION_MS = 1500;
 const ROUNDS_PER_EMOTION = 3;
 
 // 5 emotion names — used throughout, must stay consistent
-const EMOTION_NAMES = [
+export const EMOTION_NAMES = [
   "happiness",
   "neutral",
   "surprise",
@@ -84,7 +84,7 @@ const EMOTION_NAMES = [
 ];
 
 /** Short instruction shown next to each calibration button */
-const EMOTION_INSTRUCTIONS = {
+export const EMOTION_INSTRUCTIONS = {
   happiness: "genuine smile, cheeks up",
   neutral: "relaxed natural resting face",
   surprise: "eyebrows up, eyes wide, mouth open",
@@ -261,7 +261,8 @@ export function FacialEmotionDetection({ videoElement, onEmotionChange }) {
   const lastDetectedEmotionRef   = useRef("neutral");
 
   // Per-face threshold calibration state (initial from localStorage if present)
-  const [calibratedThresholds, setCalibratedThresholds] = useState(() => {
+  // Load calibrated thresholds from localStorage and reload when localStorage changes
+  const loadCalibratedThresholds = useCallback(() => {
     try {
       const s = localStorage.getItem("facialEmotionThresholds");
       if (s) {
@@ -271,7 +272,34 @@ export function FacialEmotionDetection({ videoElement, onEmotionChange }) {
       }
     } catch (_) {}
     return { ...THRESHOLDS };
-  });
+  }, []);
+
+  const [calibratedThresholds, setCalibratedThresholds] = useState(loadCalibratedThresholds);
+
+  // Listen for localStorage changes (when calibration happens in Calibration tab)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "facialEmotionThresholds") {
+        setCalibratedThresholds(loadCalibratedThresholds());
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    // Also check periodically in case same-tab updates (storage event only fires cross-tab)
+    const interval = setInterval(() => {
+      const current = loadCalibratedThresholds();
+      setCalibratedThresholds((prev) => {
+        // Only update if actually changed
+        if (JSON.stringify(prev) !== JSON.stringify(current)) {
+          return current;
+        }
+        return prev;
+      });
+    }, 1000);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [loadCalibratedThresholds]);
 
   // ── Step 1: Initialize MediaPipe (but use shared video element) ──
   useEffect(() => {

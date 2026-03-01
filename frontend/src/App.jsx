@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import FacialEmotionDetection from "./components/FacialEmotionDetection";
+import Calibration from "./components/Calibration";
 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 const css = `
@@ -105,6 +106,37 @@ const css = `
     display: flex;
     gap: 8px;
     align-items: center;
+  }
+
+  /* ── TABS ───────────────────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text3);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: 'Literata', serif;
+  }
+
+  .tab:hover {
+    color: var(--text2);
+  }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
   }
 
   /* ── MAIN ────────────────────────────────────────────────────── */
@@ -727,18 +759,30 @@ function loadScript(src) {
 
 async function initMP(videoEl, canvasEl, onResults) {
   await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js");
-  await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js");
-  await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js");
+  await loadScript(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+  );
+  await loadScript(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+  );
 
   const { Hands, HAND_CONNECTIONS } = window;
   const { Camera } = window;
   const { drawConnectors, drawLandmarks } = window;
 
   const hands = new Hands({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    locateFile: (file) =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
   });
-  hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.5 });
+  hands.setOptions({
+    maxNumHands: 2,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.5,
+  });
   hands.onResults((results) => {
+    // Check if canvas is still valid before drawing
+    if (!canvasEl || !canvasEl.getContext) return;
     const ctx = canvasEl.getContext("2d");
     canvasEl.width = results.image.width;
     canvasEl.height = results.image.height;
@@ -747,16 +791,29 @@ async function initMP(videoEl, canvasEl, onResults) {
     const hasHands = results.multiHandLandmarks?.length > 0;
     if (hasHands) {
       for (const lm of results.multiHandLandmarks) {
-        drawConnectors(ctx, lm, HAND_CONNECTIONS, { color: "rgba(0, 0, 0, 0.7)", lineWidth: 5 });
-        drawLandmarks(ctx, lm, { color: "#e1e1e1", fillColor: "#e1e1e1", lineWidth: 1, radius: 6 });
+        drawConnectors(ctx, lm, HAND_CONNECTIONS, {
+          color: "rgba(0, 0, 0, 0.7)",
+          lineWidth: 5,
+        });
+        drawLandmarks(ctx, lm, {
+          color: "#e1e1e1",
+          fillColor: "#e1e1e1",
+          lineWidth: 1,
+          radius: 6,
+        });
       }
     }
     onResults(results, hasHands);
   });
 
   const camera = new Camera(videoEl, {
-    onFrame: async () => { await hands.send({ image: videoEl }); },
-    width: 640, height: 480
+    onFrame: async () => {
+      // Check if video element is still valid
+      if (!videoEl || videoEl.readyState < 2) return;
+      await hands.send({ image: videoEl });
+    },
+    width: 640,
+    height: 480,
   });
   camera.start();
   return camera;
@@ -765,7 +822,9 @@ async function initMP(videoEl, canvasEl, onResults) {
 // ─── PDF.JS LOADER ────────────────────────────────────────────────────────────
 async function loadPdfJs() {
   if (window.pdfjsLib) return window.pdfjsLib;
-  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+  await loadScript(
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+  );
   window.pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
   return window.pdfjsLib;
@@ -773,19 +832,44 @@ async function loadPdfJs() {
 
 // ─── ICONS ───────────────────────────────────────────────────────────────────
 const ChevronLeft = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 18l-6-6 6-6"/>
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M15 18l-6-6 6-6" />
   </svg>
 );
 const ChevronRight = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 18l6-6-6-6"/>
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9 18l6-6-6-6" />
   </svg>
 );
 const CameraIcon = () => (
-  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-    <circle cx="12" cy="13" r="4"/>
+  <svg
+    width="32"
+    height="32"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+  >
+    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+    <circle cx="12" cy="13" r="4" />
   </svg>
 );
 
@@ -798,6 +882,7 @@ export default function SignSpeak() {
   // Camera / MediaPipe
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  //const cameraRef = useRef(null);
   const [handDetected, setHandDetected] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const currentLandmarksRef = useRef(null);
@@ -814,7 +899,10 @@ export default function SignSpeak() {
   const recognizedTimerRef = useRef(null);
 
   // Emotion detection
-  const [currentEmotion, setCurrentEmotion] = useState({ emotion: "neutral", confidence: 0 });
+  const [currentEmotion, setCurrentEmotion] = useState({
+    emotion: "neutral",
+    confidence: 0,
+  });
 
   // Captions
   const [captionWords, setCaptionWords] = useState([]);
@@ -827,6 +915,9 @@ export default function SignSpeak() {
   const [currentPage, setCurrentPage] = useState(1);
   const slideCanvasRef = useRef(null);
 
+  // Navigation
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "calibration"
+
   // Modals
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [signsOpen, setSignsOpen] = useState(false);
@@ -838,6 +929,9 @@ export default function SignSpeak() {
   const [rate, setRate] = useState(1);
   const [pitch, setPitch] = useState(1);
   const [volume, setVolume] = useState(1);
+
+  const [editingName, setEditingName] = useState(null); // which sign is being edited
+  const [editValue, setEditValue] = useState(""); // what value is being edited
 
   // ── STYLES INJECT ─────────────────────────────────────────────
   useEffect(() => {
@@ -873,11 +967,15 @@ export default function SignSpeak() {
     };
   }, []);
 
-  useEffect(() => { connectWs(); }, [connectWs]);
+  useEffect(() => {
+    connectWs();
+  }, [connectWs]);
 
   // ── MESSAGE HANDLER ────────────────────────────────────────────
   const isPresentingRef = useRef(false);
-  useEffect(() => { isPresentingRef.current = isPresenting; }, [isPresenting]);
+  useEffect(() => {
+    isPresentingRef.current = isPresenting;
+  }, [isPresenting]);
 
   function handleMessage(data) {
     if (data.type === "match") {
@@ -892,19 +990,34 @@ export default function SignSpeak() {
     }
     if (data.type === "recording_started") {
       setIsRecordingStatic(data.gesture_type === "static" ? true : false);
-      setRecLabel(data.gesture_type === "static" ? "Hold sign steady…" : "Recording dynamic sign…");
+      setRecLabel(
+        data.gesture_type === "static"
+          ? "Hold sign steady…"
+          : "Recording dynamic sign…"
+      );
     }
     if (data.type === "recording_done") {
       setIsRecordingStatic(false);
       setIsRecordingDynamic(false);
       setRecLabel("");
       if (data.success) {
-        const msg = data.ready ? `✓ ${data.name} ready` : `${data.name}: ${data.count}/${data.needed} — record again`;
+        const msg = data.ready
+          ? `✓ ${data.name} ready`
+          : `${data.name}: ${data.count}/${data.needed} — record again`;
         showRecog(msg);
       }
     }
     if (data.type === "templates") setTemplates(data.templates);
     if (data.type === "deleted") sendWs({ type: "get_templates" });
+    if (data.type === "renamed") {
+      setTemplates(prev => {
+        const next = { ...prev };
+        next[data.new_name] = next[data.old_name];
+        delete next[data.old_name];
+        return next;
+      });
+      setEditingName(null);
+    }
   }
 
   function sendWs(payload) {
@@ -914,6 +1027,7 @@ export default function SignSpeak() {
   }
 
   // ── MEDIAPIPE ─────────────────────────────────────────────────
+  const cameraRef = useRef(null);
   useEffect(() => {
     const vid = videoRef.current;
     const cvs = canvasRef.current;
@@ -922,12 +1036,13 @@ export default function SignSpeak() {
     const handleLoadedMetadata = () => {
       setVideoReady(true);
     };
-    
+
     vid.addEventListener("loadedmetadata", handleLoadedMetadata);
     if (vid.readyState >= 2) {
       setVideoReady(true);
     }
 
+    let cameraInstance = null;
     initMP(vid, cvs, (results, hasHands) => {
       setHandDetected(hasHands);
       if (hasHands) {
@@ -942,10 +1057,26 @@ export default function SignSpeak() {
       } else {
         currentLandmarksRef.current = null;
       }
-    });
+    })
+      .then((camera) => {
+        cameraInstance = camera;
+        cameraRef.current = camera;
+      })
+      .catch((err) => {
+        console.error("MediaPipe initialization error:", err);
+      });
 
     return () => {
       vid.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      // Stop the camera when component unmounts or when switching away
+      if (cameraInstance) {
+        try {
+          cameraInstance.stop();
+        } catch (e) {
+          // Ignore errors when stopping
+        }
+        cameraRef.current = null;
+      }
     };
   }, []);
 
@@ -959,7 +1090,8 @@ export default function SignSpeak() {
   // ── RECORDING ─────────────────────────────────────────────────
   function recordStatic() {
     if (!signName.trim()) return alert("Enter a sign name first.");
-    if (!currentLandmarksRef.current) return alert("Make sure your hand is visible.");
+    if (!currentLandmarksRef.current)
+      return alert("Make sure your hand is visible.");
     sendWs({ type: "start_static_recording", name: signName.trim() });
   }
 
@@ -997,7 +1129,8 @@ export default function SignSpeak() {
     const cvs = slideCanvasRef.current;
     cvs.width = vp.width;
     cvs.height = vp.height;
-    await page.render({ canvasContext: cvs.getContext("2d"), viewport: vp }).promise;
+    await page.render({ canvasContext: cvs.getContext("2d"), viewport: vp })
+      .promise;
   }
 
   function prevSlide() {
@@ -1020,7 +1153,10 @@ export default function SignSpeak() {
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
       if (e.key === "ArrowRight") nextSlide();
       if (e.key === "ArrowLeft") prevSlide();
-      if (e.key === " ") { e.preventDefault(); setIsPresenting((p) => !p); }
+      if (e.key === " ") {
+        e.preventDefault();
+        setIsPresenting((p) => !p);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1029,7 +1165,9 @@ export default function SignSpeak() {
   // ── TTS ───────────────────────────────────────────────────────
   function speak(text) {
     const utt = new SpeechSynthesisUtterance(text);
-    const v = window.speechSynthesis.getVoices().find((v) => v.name === selectedVoice);
+    const v = window.speechSynthesis
+      .getVoices()
+      .find((v) => v.name === selectedVoice);
     if (v) utt.voice = v;
     utt.rate = rate;
     utt.pitch = pitch;
@@ -1044,32 +1182,73 @@ export default function SignSpeak() {
     <div className="app">
       {/* HEADER */}
       <header className="header">
-        <div className="logo">Sign<span>Speak</span></div>
+        <div className="logo">
+          Sign<span>Speak</span>
+        </div>
 
         <div className="status-pill">
-          <div className={`status-dot ${wsStatus === "connected" ? "connected" : ""}`} />
+          <div
+            className={`status-dot ${
+              wsStatus === "connected" ? "connected" : ""
+            }`}
+          />
           {wsStatus === "connected" ? "Connected" : "Disconnected"}
         </div>
 
         <div className="header-right">
-          <button className="btn btn-default" onClick={() => setVoiceOpen(true)}>
-            Voice
-          </button>
-          <button className="btn btn-default" onClick={() => {
-            setSignsOpen(true);
-            sendWs({ type: "get_templates" });
-          }}>
-            Saved Signs
-          </button>
-          <label className="btn btn-primary" style={{ cursor: "pointer" }}>
-            Load PDF
-            <input className="sr-only" type="file" accept=".pdf" onChange={handlePdfLoad} />
-          </label>
+          {activeTab === "dashboard" && (
+            <>
+              <button
+                className="btn btn-default"
+                onClick={() => setVoiceOpen(true)}
+              >
+                Voice
+              </button>
+              <button
+                className="btn btn-default"
+                onClick={() => {
+                  setSignsOpen(true);
+                  sendWs({ type: "get_templates" });
+                }}
+              >
+                Saved Signs
+              </button>
+              <label className="btn btn-primary" style={{ cursor: "pointer" }}>
+                Load PDF
+                <input
+                  className="sr-only"
+                  type="file"
+                  accept=".pdf"
+                  onChange={handlePdfLoad}
+                />
+              </label>
+            </>
+          )}
         </div>
       </header>
 
+      {/* TABS */}
+      <div className="tabs">
+        <button
+          className={`tab ${activeTab === "dashboard" ? "active" : ""}`}
+          onClick={() => setActiveTab("dashboard")}
+        >
+          Dashboard
+        </button>
+        <button
+          className={`tab ${activeTab === "calibration" ? "active" : ""}`}
+          onClick={() => setActiveTab("calibration")}
+        >
+          Calibration
+        </button>
+      </div>
+
       {/* MAIN */}
-      <div className="main">
+      {/* Keep Dashboard always mounted but hidden when Calibration is active */}
+      <div
+        className="main"
+        style={{ display: activeTab === "calibration" ? "none" : "grid" }}
+      >
         {/* LEFT: CAMERA */}
         <div className="left-panel">
           <div className="panel-label">
@@ -1083,9 +1262,15 @@ export default function SignSpeak() {
           </div>
 
           <div className="camera-wrap">
-            <video ref={videoRef} autoPlay muted playsInline style={{ display: "none" }} />
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              style={{ display: "none" }}
+            />
             <canvas ref={canvasRef} className="camera-canvas" />
-            
+
             {/* Face emotion detection - processes video in background */}
             {videoReady && videoRef.current && (
               <FacialEmotionDetection
@@ -1102,22 +1287,24 @@ export default function SignSpeak() {
               </div>
             )}
 
-            {/* Emotion display */}
-            {currentEmotion.emotion !== "neutral" && currentEmotion.confidence > 0 && (
-              <div style={{
-                position: "absolute",
-                top: "10px",
-                right: "10px",
-                background: "var(--accent-bg)",
-                border: "1px solid var(--accent-dim)",
-                borderRadius: "var(--radius-sm)",
-                padding: "6px 12px",
-                fontSize: "12px",
-                fontFamily: "'Geist Mono', monospace",
-                color: "var(--accent)",
-                fontWeight: 500,
-                boxShadow: "var(--shadow-sm)"
-              }}>
+            {/* Emotion display - now includes neutral */}
+            {currentEmotion.emotion && currentEmotion.confidence > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "10px",
+                  right: "10px",
+                  background: "var(--accent-bg)",
+                  border: "1px solid var(--accent-dim)",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "6px 12px",
+                  fontSize: "12px",
+                  fontFamily: "'Geist Mono', monospace",
+                  color: "var(--accent)",
+                  fontWeight: 500,
+                  boxShadow: "var(--shadow-sm)",
+                }}
+              >
                 {currentEmotion.emotion} ({currentEmotion.confidence}%)
               </div>
             )}
@@ -1145,7 +1332,9 @@ export default function SignSpeak() {
                 📸 Static
               </button>
               <button
-                className={`btn ${isRecordingDynamic ? "btn-danger" : "btn-default"}`}
+                className={`btn ${
+                  isRecordingDynamic ? "btn-danger" : "btn-default"
+                }`}
                 onClick={toggleDynamic}
               >
                 {isRecordingDynamic ? "⏹ Stop" : "⏺ Dynamic"}
@@ -1163,10 +1352,21 @@ export default function SignSpeak() {
                   <CameraIcon />
                 </div>
                 <h3>Load your presentation</h3>
-                <p>Upload a PDF to display slides. Use the camera to sign and speak your content.</p>
-                <label className="btn btn-primary" style={{ cursor: "pointer", marginTop: 4 }}>
+                <p>
+                  Upload a PDF to display slides. Use the camera to sign and
+                  speak your content.
+                </p>
+                <label
+                  className="btn btn-primary"
+                  style={{ cursor: "pointer", marginTop: 4 }}
+                >
                   Choose PDF
-                  <input className="sr-only" type="file" accept=".pdf" onChange={handlePdfLoad} />
+                  <input
+                    className="sr-only"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handlePdfLoad}
+                  />
                 </label>
               </div>
             ) : (
@@ -1176,13 +1376,21 @@ export default function SignSpeak() {
 
           {/* SLIDE NAV */}
           <div className="slide-controls">
-            <button className="btn btn-icon" onClick={prevSlide} disabled={!pdfDoc || currentPage <= 1}>
+            <button
+              className="btn btn-icon"
+              onClick={prevSlide}
+              disabled={!pdfDoc || currentPage <= 1}
+            >
               <ChevronLeft />
             </button>
             <span className="slide-count">
               {pdfDoc ? `${currentPage} / ${pdfDoc.numPages}` : "— / —"}
             </span>
-            <button className="btn btn-icon" onClick={nextSlide} disabled={!pdfDoc || currentPage >= (pdfDoc?.numPages ?? 1)}>
+            <button
+              className="btn btn-icon"
+              onClick={nextSlide}
+              disabled={!pdfDoc || currentPage >= (pdfDoc?.numPages ?? 1)}
+            >
               <ChevronRight />
             </button>
             <div className="slide-spacer" />
@@ -1207,10 +1415,14 @@ export default function SignSpeak() {
             <span className="cc-label">CC</span>
             <div className="caption-text">
               {captionWords.length === 0 ? (
-                <span className="caption-empty">Captions will appear here as you sign…</span>
+                <span className="caption-empty">
+                  Captions will appear here as you sign…
+                </span>
               ) : (
                 captionWords.map((w, i) => (
-                  <span key={i} className="caption-word">{w} </span>
+                  <span key={i} className="caption-word">
+                    {w}{" "}
+                  </span>
                 ))
               )}
             </div>
@@ -1218,43 +1430,111 @@ export default function SignSpeak() {
         </div>
       </div>
 
+      {/* CALIBRATION TAB - Rendered separately to avoid interfering with Dashboard video */}
+      {activeTab === "calibration" && (
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            padding: "24px",
+            maxWidth: "800px",
+            margin: "0 auto",
+            width: "100%",
+          }}
+        >
+          <Calibration />
+        </div>
+      )}
+
       {/* VOICE MODAL */}
       {voiceOpen && (
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && setVoiceOpen(false)}>
+        <div
+          className="overlay"
+          onClick={(e) => e.target === e.currentTarget && setVoiceOpen(false)}
+        >
           <div className="modal">
             <div className="modal-title">Voice Settings</div>
-            <div className="modal-sub">Adjust how SignSpeak reads your signs aloud.</div>
+            <div className="modal-sub">
+              Adjust how SignSpeak reads your signs aloud.
+            </div>
 
             <div className="form-group">
               <label className="form-label">Voice</label>
-              <select className="select" value={selectedVoice} onChange={(e) => setSelectedVoice(e.target.value)}>
+              <select
+                className="select"
+                value={selectedVoice}
+                onChange={(e) => setSelectedVoice(e.target.value)}
+              >
                 {voices.map((v) => (
-                  <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
+                  <option key={v.name} value={v.name}>
+                    {v.name} ({v.lang})
+                  </option>
                 ))}
               </select>
             </div>
 
             {[
-              { label: "Speed", val: rate, set: setRate, min: 0.5, max: 2, step: 0.1, fmt: (v) => `${parseFloat(v).toFixed(1)}×` },
-              { label: "Pitch", val: pitch, set: setPitch, min: 0.5, max: 2, step: 0.1, fmt: (v) => parseFloat(v).toFixed(1) },
-              { label: "Volume", val: volume, set: setVolume, min: 0, max: 1, step: 0.05, fmt: (v) => `${Math.round(v * 100)}%` },
+              {
+                label: "Speed",
+                val: rate,
+                set: setRate,
+                min: 0.5,
+                max: 2,
+                step: 0.1,
+                fmt: (v) => `${parseFloat(v).toFixed(1)}×`,
+              },
+              {
+                label: "Pitch",
+                val: pitch,
+                set: setPitch,
+                min: 0.5,
+                max: 2,
+                step: 0.1,
+                fmt: (v) => parseFloat(v).toFixed(1),
+              },
+              {
+                label: "Volume",
+                val: volume,
+                set: setVolume,
+                min: 0,
+                max: 1,
+                step: 0.05,
+                fmt: (v) => `${Math.round(v * 100)}%`,
+              },
             ].map(({ label, val, set, min, max, step, fmt }) => (
               <div className="form-group" key={label}>
                 <label className="form-label">{label}</label>
                 <div className="range-row">
-                  <input type="range" min={min} max={max} step={step} value={val}
-                    onChange={(e) => set(parseFloat(e.target.value))} />
+                  <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={val}
+                    onChange={(e) => set(parseFloat(e.target.value))}
+                  />
                   <span className="range-val">{fmt(val)}</span>
                 </div>
               </div>
             ))}
 
-            <button className="btn btn-default" onClick={() => speak("Hello, my name is SignSpeak. I am ready to present.")}>
+            <button
+              className="btn btn-default"
+              onClick={() =>
+                speak("Hello, my name is SignSpeak. I am ready to present.")
+              }
+            >
               🔊 Test Voice
             </button>
 
             <div className="modal-footer">
-              <button className="btn btn-primary" onClick={() => setVoiceOpen(false)}>Done</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => setVoiceOpen(false)}
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>
@@ -1262,38 +1542,103 @@ export default function SignSpeak() {
 
       {/* SIGNS MODAL */}
       {signsOpen && (
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && setSignsOpen(false)}>
+        <div
+          className="overlay"
+          onClick={(e) => e.target === e.currentTarget && setSignsOpen(false)}
+        >
           <div className="modal">
             <div className="modal-title">Saved Signs</div>
-            <div className="modal-sub">All your recorded gestures and their training status.</div>
+            <div className="modal-sub">
+              All your recorded gestures and their training status.
+            </div>
 
             <div className="template-list">
               {Object.keys(templates).length === 0 ? (
-                <div className="empty-state">No signs recorded yet. Use the camera panel to get started.</div>
+                <div className="empty-state">
+                  No signs recorded yet. Use the camera panel to get started.
+                </div>
               ) : (
                 Object.entries(templates).map(([name, info]) => (
                   <div className="template-row" key={name}>
-                    <div className="template-info">
-                      <span className="template-name">{name}</span>
-                      <span className={`tag tag-${info.type}`}>{info.type}</span>
-                      <span className={`tag ${info.ready ? "tag-ready" : "tag-pending"}`}>
-                        {info.ready ? "✓ ready" : `${info.recordings}/${info.needed}`}
-                      </span>
+                    <div className="template-left">
+                      <div className="template-top">
+                        {editingName === name ? (
+                          <input
+                            className="input"
+                            style={{ fontSize: 13, padding: "4px 8px", width: "auto", flex: 1 }}
+                            value={editValue}
+                            autoFocus
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && editValue.trim()) {
+                                sendWs({ type: "rename_template", old_name: name, new_name: editValue.trim() });
+                              }
+                              if (e.key === "Escape") setEditingName(null);
+                            }}
+                          />
+                        ) : (
+                          <span className="template-name">{name}</span>
+                        )}
+                        <span className={`tag tag-${info.type}`}>{info.type}</span>
+                        <span className={`tag ${info.ready ? "tag-ready" : "tag-pending"}`}>
+                          {info.ready ? "✓ ready" : "training"}
+                        </span>
+                      </div>
+                      <TrainingProgress recordings={info.recordings} needed={info.needed} />
                     </div>
-                    <button
-                      className="btn btn-danger"
-                      style={{ fontSize: 11, padding: "4px 10px" }}
-                      onClick={() => sendWs({ type: "delete_template", name })}
-                    >
-                      Delete
-                    </button>
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                      {editingName === name ? (
+                        <>
+                          <button
+                            className="btn btn-primary"
+                            style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => {
+                              if (editValue.trim()) {
+                                sendWs({ type: "rename_template", old_name: name, new_name: editValue.trim() });
+                              }
+                            }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="btn btn-ghost"
+                            style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => setEditingName(null)}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            className="btn btn-default"
+                            style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => { setEditingName(name); setEditValue(name); }}
+                          >
+                            Rename
+                          </button>
+                          <button
+                            className="btn btn-danger"
+                            style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => sendWs({ type: "delete_template", name })}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-primary" onClick={() => setSignsOpen(false)}>Done</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => setSignsOpen(false)}
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>
