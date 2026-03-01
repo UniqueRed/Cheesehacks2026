@@ -856,9 +856,28 @@ export default function SignSpeak() {
   const {
     stream: facialStream,
     currentEmotion,
+    detectedEmotion, // Use detected emotion (immediate) instead of currentEmotion (stable)
     confidence,
     isRunning: facialRunning,
   } = useFacialEmotion();
+  
+  // Track the most recent non-neutral emotion in a ref (so it doesn't get stale)
+  const latestNonNeutralEmotionRef = useRef("neutral");
+  
+  // Update ref when detectedEmotion changes
+  useEffect(() => {
+    if (detectedEmotion !== "neutral") {
+      latestNonNeutralEmotionRef.current = detectedEmotion;
+      console.log(`[App] detectedEmotion changed to: '${detectedEmotion}' (stored in ref)`);
+    }
+  }, [detectedEmotion]);
+  
+  // Debug: log when currentEmotion changes
+  useEffect(() => {
+    if (currentEmotion !== "neutral") {
+      console.log(`[App] currentEmotion changed to: '${currentEmotion}'`);
+    }
+  }, [currentEmotion]);
 
   // WebSocket
   const [wsStatus, setWsStatus] = useState("disconnected");
@@ -939,60 +958,67 @@ export default function SignSpeak() {
   const [editValue, setEditValue] = useState("");
 
   // ── SPEECH BUFFER ─────────────────────────────────────────────────────────
+  // COMMENTED OUT: Browser TTS is no longer used. Only Gemini TTS audio from backend is used.
   // Words accumulate here. A debounced timer fires speakAccumulated() after
   // 300ms of silence, speaking the whole sentence as one utterance.
   // speak_sentence from the backend acts as a hard flush.
-  const speechBufferRef = useRef([]);
-  const speechTimerRef = useRef(null);
+  // const speechBufferRef = useRef([]);
+  // const speechTimerRef = useRef(null);
 
-  const voiceSettingsRef = useRef({
-    selectedVoice: "",
-    rate: 1,
-    pitch: 1,
-    volume: 1,
-  });
-  useEffect(() => {
-    voiceSettingsRef.current = { selectedVoice, rate, pitch, volume };
-  }, [selectedVoice, rate, pitch, volume]);
+  // const voiceSettingsRef = useRef({
+  //   selectedVoice: "",
+  //   rate: 1,
+  //   pitch: 1,
+  //   volume: 1,
+  // });
+  // useEffect(() => {
+  //   voiceSettingsRef.current = { selectedVoice, rate, pitch, volume };
+  // }, [selectedVoice, rate, pitch, volume]);
 
-  function speakAccumulated() {
-    const text = speechBufferRef.current.join(" ").trim();
-    if (!text) return;
-    window.speechSynthesis.cancel();
-    const {
-      selectedVoice: sv,
-      rate: r,
-      pitch: p,
-      volume: vol,
-    } = voiceSettingsRef.current;
-    const utt = new SpeechSynthesisUtterance(text);
-    const v = window.speechSynthesis.getVoices().find((v) => v.name === sv);
-    if (v) utt.voice = v;
-    utt.rate = r;
-    utt.pitch = p;
-    utt.volume = vol;
-    window.speechSynthesis.speak(utt);
-  }
+  // function speakAccumulated() {
+  //   const text = speechBufferRef.current.join(" ").trim();
+  //   if (!text) return;
+  //   window.speechSynthesis.cancel();
+  //   const {
+  //     selectedVoice: sv,
+  //     rate: r,
+  //     pitch: p,
+  //     volume: vol,
+  //   } = voiceSettingsRef.current;
+  //   const utt = new SpeechSynthesisUtterance(text);
+  //   const v = window.speechSynthesis.getVoices().find((v) => v.name === sv);
+  //   if (v) utt.voice = v;
+  //   utt.rate = r;
+  //   utt.pitch = p;
+  //   utt.volume = vol;
+  //   window.speechSynthesis.speak(utt);
+  // }
 
-  function pushToSpeechBuffer(word) {
-    speechBufferRef.current.push(word);
-    clearTimeout(speechTimerRef.current);
-    speechTimerRef.current = setTimeout(() => {
-      speakAccumulated();
-      speechBufferRef.current = [];
-    }, 300);
-  }
+  // function pushToSpeechBuffer(word) {
+  //   speechBufferRef.current.push(word);
+  //   clearTimeout(speechTimerRef.current);
+  //   speechTimerRef.current = setTimeout(() => {
+  //     speakAccumulated();
+  //     speechBufferRef.current = [];
+  //   }, 300);
+  // }
 
-  function flushSpeechBuffer() {
-    clearTimeout(speechTimerRef.current);
-    speakAccumulated();
-    speechBufferRef.current = [];
-  }
+  // function flushSpeechBuffer() {
+  //   clearTimeout(speechTimerRef.current);
+  //   speakAccumulated();
+  //   speechBufferRef.current = [];
+  // }
+
+  // Track current audio element for cancellation
+  const currentAudioRef = useRef(null);
 
   function clearSpeechBuffer() {
-    clearTimeout(speechTimerRef.current);
-    speechBufferRef.current = [];
-    window.speechSynthesis.cancel();
+    // Cancel any playing Gemini TTS audio
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+    // window.speechSynthesis.cancel(); // COMMENTED OUT: No longer using browser TTS
   }
 
   // Inject styles
@@ -1003,16 +1029,17 @@ export default function SignSpeak() {
     return () => el.remove();
   }, []);
 
+  // COMMENTED OUT: Browser TTS voices loading - only Gemini TTS is used now
   // Voices
-  useEffect(() => {
-    const load = () => {
-      const v = window.speechSynthesis.getVoices();
-      setVoices(v);
-      if (v.length && !selectedVoice) setSelectedVoice(v[0].name);
-    };
-    load();
-    window.speechSynthesis.onvoiceschanged = load;
-  }, []);
+  // useEffect(() => {
+  //   const load = () => {
+  //     const v = window.speechSynthesis.getVoices();
+  //     setVoices(v);
+  //     if (v.length && !selectedVoice) setSelectedVoice(v[0].name);
+  //   };
+  //   load();
+  //   window.speechSynthesis.onvoiceschanged = load;
+  // }, []);
 
   useEffect(() => {
     try {
@@ -1067,8 +1094,82 @@ export default function SignSpeak() {
     }
 
     // speak_sentence: backend flushed a full sentence — speak it all at once
+    // Only use Gemini TTS audio from backend - no browser TTS fallback
     if (data.type === "speak_sentence" && isPresentingRef.current) {
-      speak(data.text);
+      console.log("[Frontend TTS] Received speak_sentence message:", {
+        text: data.text,
+        emotion: data.emotion,
+        hasAudio: !!data.audio,
+        audioLength: data.audio ? data.audio.length : 0,
+        audioFormat: data.audio_format
+      });
+      
+      // Only play if audio is provided from backend Gemini TTS
+      if (data.audio) {
+        console.log("[Frontend TTS] Audio present, processing...");
+        try {
+          // Cancel any currently playing audio
+          if (currentAudioRef.current) {
+            console.log("[Frontend TTS] Cancelling previous audio");
+            currentAudioRef.current.pause();
+            currentAudioRef.current = null;
+          }
+
+          console.log("[Frontend TTS] Decoding base64 audio...");
+          // Decode base64 audio from Gemini TTS
+          const audioBytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
+          console.log("[Frontend TTS] Decoded audio bytes length:", audioBytes.length);
+          
+          const audioBlob = new Blob([audioBytes], { 
+            type: data.audio_format === "mp3" ? "audio/mpeg" : "audio/wav" 
+          });
+          console.log("[Frontend TTS] Created audio blob, type:", audioBlob.type, "size:", audioBlob.size);
+          
+          const audioUrl = URL.createObjectURL(audioBlob);
+          console.log("[Frontend TTS] Created object URL:", audioUrl);
+          
+          const audio = new Audio(audioUrl);
+          console.log("[Frontend TTS] Created Audio element");
+          
+          // Store reference for cancellation
+          currentAudioRef.current = audio;
+          
+          // Add event listeners for debugging
+          audio.addEventListener('loadstart', () => console.log("[Frontend TTS] Audio loadstart"));
+          audio.addEventListener('loadeddata', () => console.log("[Frontend TTS] Audio loadeddata"));
+          audio.addEventListener('canplay', () => console.log("[Frontend TTS] Audio canplay"));
+          audio.addEventListener('play', () => console.log("[Frontend TTS] Audio play event"));
+          audio.addEventListener('error', (e) => {
+            console.error("[Frontend TTS] Audio error:", e);
+            console.error("[Frontend TTS] Audio error details:", {
+              code: audio.error?.code,
+              message: audio.error?.message
+            });
+          });
+          
+          console.log("[Frontend TTS] Attempting to play audio...");
+          audio.play().then(() => {
+            console.log("[Frontend TTS] Audio play() promise resolved - audio should be playing");
+          }).catch(err => {
+            console.error("[Frontend TTS] Error playing Gemini TTS audio:", err);
+            currentAudioRef.current = null;
+          });
+          
+          // Clean up URL and reference after playback
+          audio.onended = () => {
+            console.log("[Frontend TTS] Audio playback ended");
+            URL.revokeObjectURL(audioUrl);
+            currentAudioRef.current = null;
+          };
+        } catch (err) {
+          console.error("[Frontend TTS] Error processing Gemini TTS audio:", err);
+          console.error("[Frontend TTS] Error stack:", err.stack);
+          currentAudioRef.current = null;
+        }
+      } else {
+        console.warn("[Frontend TTS] No audio received from backend Gemini TTS for chunk:", data.text);
+        console.warn("[Frontend TTS] Message data:", data);
+      }
     }
 
     if (data.type === "recording_started") {
@@ -1149,7 +1250,26 @@ export default function SignSpeak() {
         const lmData = results.multiHandLandmarks.map((hand) =>
           hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z })),
         );
-        sendWs({ type: "landmarks", landmarks: lmData });
+        // Use detectedEmotion if non-neutral, otherwise use the most recent non-neutral from ref, otherwise currentEmotion
+        // This prevents losing the emotion when it briefly flickers to neutral
+        const emotionToSend = detectedEmotion !== "neutral" 
+          ? detectedEmotion 
+          : (latestNonNeutralEmotionRef.current !== "neutral" 
+              ? latestNonNeutralEmotionRef.current 
+              : (currentEmotion || "neutral"));
+        
+        // Debug: log emotion being sent (throttled to avoid spam)
+        if (emotionToSend !== "neutral") {
+          console.log(`[Frontend Emotion] ✅ Sending NON-NEUTRAL emotion '${emotionToSend}' | detectedEmotion: '${detectedEmotion}' | ref: '${latestNonNeutralEmotionRef.current}' | currentEmotion: '${currentEmotion}'`);
+        } else if (Math.random() < 0.1) {
+          console.log(`[Frontend Emotion] Sending NEUTRAL | detectedEmotion: '${detectedEmotion}' | ref: '${latestNonNeutralEmotionRef.current}' | currentEmotion: '${currentEmotion}'`);
+        }
+        const message = { 
+          type: "landmarks", 
+          landmarks: lmData,
+          emotion: emotionToSend
+        };
+        sendWs(message);
       } else {
         currentLandmarksRef.current = null;
       }
@@ -1311,19 +1431,20 @@ export default function SignSpeak() {
     return () => window.removeEventListener("keydown", onKey);
   }, [pdfDoc, currentPage, isPresenting]);
 
+  // COMMENTED OUT: Browser TTS is no longer used. Only Gemini TTS audio from backend is used.
   // TTS — only used directly for the voice test button now
-  function speak(text) {
-    window.speechSynthesis.cancel(); // cancel any in-progress utterance
-    const utt = new SpeechSynthesisUtterance(text);
-    const v = window.speechSynthesis
-      .getVoices()
-      .find((v) => v.name === selectedVoice);
-    if (v) utt.voice = v;
-    utt.rate = rate;
-    utt.pitch = pitch;
-    utt.volume = volume;
-    window.speechSynthesis.speak(utt);
-  }
+  // function speak(text) {
+  //   window.speechSynthesis.cancel(); // cancel any in-progress utterance
+  //   const utt = new SpeechSynthesisUtterance(text);
+  //   const v = window.speechSynthesis
+  //     .getVoices()
+  //     .find((v) => v.name === selectedVoice);
+  //   if (v) utt.voice = v;
+  //   utt.rate = rate;
+  //   utt.pitch = pitch;
+  //   utt.volume = volume;
+  //   window.speechSynthesis.speak(utt);
+  // }
 
   function togglePresenting() {
     const next = !isPresenting;
@@ -1732,14 +1853,15 @@ export default function SignSpeak() {
               </div>
             ))}
 
-            <button
+            {/* COMMENTED OUT: Browser TTS test button - only Gemini TTS audio is used now */}
+            {/* <button
               className="btn btn-default"
               onClick={() =>
                 speak("Hello, my name is SignSpeak. I am ready to present.")
               }
             >
               🔊 Test Voice
-            </button>
+            </button> */}
 
             <div className="modal-footer">
               <button

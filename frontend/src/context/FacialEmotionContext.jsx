@@ -34,6 +34,7 @@ export function FacialEmotionProvider({ children }) {
   const [stream, setStream] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [currentEmotion, setCurrentEmotion] = useState("neutral");
+  const [detectedEmotion, setDetectedEmotion] = useState("neutral"); // Most recent detected emotion (not waiting for stability)
   const [confidence, setConfidence] = useState(0);
   const [blendshapesDebug, setBlendshapesDebug] = useState({});
   const [normalizedBlendshapes, setNormalizedBlendshapes] = useState({});
@@ -176,6 +177,13 @@ export function FacialEmotionProvider({ children }) {
           setNormalizedBlendshapes(normalized);
 
           const emotion = classifyEmotion(normalized, thresholdsRef.current);
+          // Always update detectedEmotion immediately (for TTS)
+          // Debug: log detected emotion before setting
+          if (emotion !== "neutral") {
+            console.log(`[Context] ✅ Detected NON-NEUTRAL emotion: '${emotion}' (updating detectedEmotion state)`);
+          }
+          setDetectedEmotion(emotion);
+          
           if (emotion === lastDetectedEmotionRef.current) {
             sameEmotionCountRef.current += 1;
             if (sameEmotionCountRef.current >= thresholdsRef.current.STABILITY_FRAMES) {
@@ -221,6 +229,7 @@ export function FacialEmotionProvider({ children }) {
     () => ({
       stream,
       currentEmotion,
+      detectedEmotion, // Most recent detected emotion (for TTS)
       confidence,
       blendshapesDebug,
       normalizedBlendshapes,
@@ -231,6 +240,7 @@ export function FacialEmotionProvider({ children }) {
     [
       stream,
       currentEmotion,
+      detectedEmotion,
       confidence,
       blendshapesDebug,
       normalizedBlendshapes,

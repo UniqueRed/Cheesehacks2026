@@ -15,6 +15,7 @@ No ML, no downloads, no API. Runs in <1ms.
 
 import time
 import threading
+from collections import Counter
 
 
 # ─── LINGUISTIC CONSTANTS ────────────────────────────────────────────────────
@@ -128,7 +129,7 @@ def clean(raw_words):
 
 class StreamCleaner:
     """
-    Accumulates raw recognized words in real time.
+    Accumulates raw recognized words in real time with emotion tracking.
 
     Behavior:
       - Every new word is immediately cleaned against the running buffer
@@ -136,6 +137,7 @@ class StreamCleaner:
       - After SENTENCE_PAUSE seconds of silence, the full accumulated
         sentence is cleaned, spoken as one utterance, then the buffer resets.
       - force_flush() triggers this immediately (e.g. presenter stops).
+      - Tracks emotions per word and calculates average emotion per chunk.
 
     This means captions grow word by word in real time, and speech fires
     once per natural sentence pause — not fragmented per chunk.
@@ -145,21 +147,26 @@ class StreamCleaner:
         """
         on_word(word):      called immediately when a clean word should
                             be appended to live captions.
-        on_sentence(text):  called after a pause with the full cleaned
-                            sentence for TTS speech.
+        on_sentence(text, emotion):  called after a pause with the full cleaned
+                            sentence and average emotion for TTS speech.
         sentence_pause:     seconds of silence before speaking the sentence.
         """
         self.on_word      = on_word
         self.on_sentence  = on_sentence
         self.pause        = sentence_pause
         self._raw         = []   # all raw words this sentence
+        self._emotions    = []   # emotions corresponding to each word
         self._lock        = threading.Lock()
         self._timer       = None
 
-    def push(self, word):
+    def push(self, word, emotion=None):
         """
-        Push a new raw recognized word.
+        Push a new raw recognized word with optional emotion.
         Returns the cleaned word to show in captions immediately (or None if noise).
+        
+        Args:
+            word: The recognized word
+            emotion: Optional emotion string (happiness, sadness, anger, fear, surprise, neutral)
         """
         word = word.strip()
         if not word:
@@ -181,8 +188,12 @@ class StreamCleaner:
                     self._reset_timer()
                     return
 
-            # Word is clean — add to buffer
+            # Word is clean — add to buffer with emotion
             self._raw.append(word)
+            # Use provided emotion or default to neutral
+            emotion_to_store = emotion if emotion else "neutral"
+            self._emotions.append(emotion_to_store)
+            print(f"[Cleaner] Stored word '{word}' with emotion '{emotion_to_store}' (total words: {len(self._raw)}, total emotions: {len(self._emotions)})")
 
         # Emit immediately for live captions
         self.on_word(word)
@@ -198,6 +209,7 @@ class StreamCleaner:
         self._cancel_timer()
         with self._lock:
             self._raw.clear()
+            self._emotions.clear()
 
     # ── INTERNALS ────────────────────────────────────────────────────────────
 
@@ -218,9 +230,32 @@ class StreamCleaner:
             if not self._raw:
                 return
             words      = list(self._raw)
+            emotions   = list(self._emotions)
             self._raw  = []
+            self._emotions = []
 
         cleaned = clean(words)
         if cleaned:
-            print(f"Speaking: '{cleaned}'")
-            self.on_sentence(cleaned)
+            # Calculate average emotion for this chunk
+            print(f"[Cleaner] Calculating average emotion for chunk '{cleaned}'")
+            print(f"[Cleaner] Words in chunk: {words}")
+            print(f"[Cleaner] Emotions in chunk: {emotions}")
+            print(f"[Cleaner] Emotion list length: {len(emotions)}, Word list length: {len(words)}")
+            
+            # Count occurrences of each emotion
+            emotion_counts = Counter(emotions)
+            print(f"[Cleaner] Emotion counts: {dict(emotion_counts)}")
+            
+            # Get the most common emotion (mode)
+            if emotion_counts:
+                most_common = emotion_counts.most_common(1)[0]
+                avg_emotion = most_common[0]
+                count = most_common[1]
+                print(f"[Cleaner] Most common emotion: '{avg_emotion}' (appeared {count} times out of {len(emotions)})")
+            else:
+                avg_emotion = "neutral"
+                print(f"[Cleaner] WARNING: No emotions found, defaulting to 'neutral'")
+            
+            print(f"[Cleaner] Final average emotion for chunk: '{avg_emotion}'")
+            print(f"Speaking: '{cleaned}' with emotion: {avg_emotion}")
+            self.on_sentence(cleaned, avg_emotion)

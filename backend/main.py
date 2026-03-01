@@ -10,18 +10,52 @@ Architecture:
 
 import json
 import asyncio
+import os
 import numpy as np
 from collections import deque, Counter
+from pathlib import Path
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from recognizer import GestureRecognizer
 from features import extract_dynamic_frame, fingertip_velocity
 from cleaner import StreamCleaner
+from tts_service import TTSService
+import base64
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 recognizer = GestureRecognizer()
+
+# Initialize TTS service (will raise error if credentials not set)
+# Try to find credentials file automatically
+
+# Check if GOOGLE_APPLICATION_CREDENTIALS is already set
+if not os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+    # Look for credentials file in common locations
+    possible_paths = [
+        Path(__file__).parent.parent / "signspeak-488902-b29067f64881.json",
+        Path(__file__).parent / "signspeak-488902-b29067f64881.json",
+        Path.cwd() / "signspeak-488902-b29067f64881.json",
+    ]
+    
+    for cred_path in possible_paths:
+        if cred_path.exists():
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(cred_path.absolute())
+            print(f"[TTS] Found credentials file at: {cred_path.absolute()}")
+            break
+    else:
+        print(f"[TTS] Warning: No credentials file found. Checked paths: {possible_paths}")
+
+try:
+    tts_service = TTSService()
+    print(f"[TTS] TTS service initialized successfully")
+except Exception as e:
+    print(f"[TTS] ERROR: TTS service initialization failed: {e}")
+    print(f"[TTS] GOOGLE_APPLICATION_CREDENTIALS: {os.getenv('GOOGLE_APPLICATION_CREDENTIALS')}")
+    import traceback
+    traceback.print_exc()
+    tts_service = None
 
 # ─── TUNING ───────────────────────────────────────────────────────────────────
 VOTE_WINDOW      = 10    # was 16: fires in ~0.67s at 15fps instead of ~1s
@@ -60,8 +94,8 @@ async def websocket_endpoint(websocket: WebSocket):
     def on_word(word):
         loop.call_soon_threadsafe(word_queue.put_nowait, word)
 
-    def on_sentence(text):
-        loop.call_soon_threadsafe(sentence_queue.put_nowait, text)
+    def on_sentence(text, emotion):
+        loop.call_soon_threadsafe(sentence_queue.put_nowait, (text, emotion))
 
     cleaner = StreamCleaner(on_word=on_word, on_sentence=on_sentence, sentence_pause=4.0)
 
@@ -85,6 +119,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
         # shared cooldown
         "cooldown":            0,
+        
+        # emotion tracking
+        "current_emotion":      "neutral",
     }
 
     async def send_words():
@@ -103,13 +140,57 @@ async def websocket_endpoint(websocket: WebSocket):
         """Sends full cleaned sentences for TTS after natural pauses."""
         try:
             while True:
-                text = await sentence_queue.get()
-                await websocket.send_text(json.dumps({
-                    "type": "speak_sentence",
-                    "text": text,
-                }))
-        except Exception:
-            pass
+                text, emotion = await sentence_queue.get()
+                print(f"[TTS] Received chunk for synthesis - text: '{text}', emotion: '{emotion}'")
+                
+                # Synthesize speech with TTS service if available
+                if tts_service:
+                    print(f"[TTS] TTS service is available, starting synthesis...")
+                    try:
+                        print(f"[TTS] Calling synthesize_speech with text='{text}', emotion='{emotion}'")
+                        audio_data = await tts_service.synthesize_speech(
+                            text=text,
+                            emotion=emotion
+                        )
+                        print(f"[TTS] Synthesis successful! Audio data length: {len(audio_data)} bytes")
+                        
+                        # Encode audio as base64 for transmission
+                        audio_b64 = base64.b64encode(audio_data).decode('utf-8')
+                        print(f"[TTS] Base64 encoded audio length: {len(audio_b64)} characters")
+                        
+                        message = {
+                            "type": "speak_sentence",
+                            "text": text,
+                            "emotion": emotion,
+                            "audio": audio_b64,
+                            "audio_format": "mp3"
+                        }
+                        print(f"[TTS] Sending message with audio to frontend (audio field present: {bool(audio_b64)})")
+                        await websocket.send_text(json.dumps(message))
+                        print(f"[TTS] Message sent successfully")
+                    except Exception as e:
+                        print(f"[TTS] TTS synthesis error: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        # Fallback: send text without audio
+                        print(f"[TTS] Sending message WITHOUT audio as fallback")
+                        await websocket.send_text(json.dumps({
+                            "type": "speak_sentence",
+                            "text": text,
+                            "emotion": emotion,
+                        }))
+                else:
+                    # No TTS service, just send text
+                    print(f"[TTS] WARNING: TTS service is None! Sending message without audio")
+                    await websocket.send_text(json.dumps({
+                        "type": "speak_sentence",
+                        "text": text,
+                        "emotion": emotion,
+                    }))
+        except Exception as e:
+            print(f"[TTS] Error in send_sentences: {e}")
+            import traceback
+            traceback.print_exc()
 
     word_task     = asyncio.create_task(send_words())
     sentence_task = asyncio.create_task(send_sentences())
@@ -123,6 +204,21 @@ async def websocket_endpoint(websocket: WebSocket):
             # ── LANDMARK FRAME ─────────────────────────────────────────────
             if msg_type == "landmarks":
                 frames   = data.get("landmarks", [])
+                # Update current emotion if provided
+                if "emotion" in data:
+                    new_emotion = data.get("emotion", "neutral")
+                    old_emotion = state["current_emotion"]
+                    state["current_emotion"] = new_emotion
+                    if new_emotion != old_emotion:
+                        print(f"[Emotion] ✅ Emotion updated: '{old_emotion}' -> '{new_emotion}'")
+                    # Debug: log all non-neutral emotions
+                    if new_emotion != "neutral":
+                        print(f"[Emotion] ✅✅✅ Received NON-NEUTRAL emotion '{new_emotion}' from frontend (raw data: {data.get('emotion')})")
+                else:
+                    # Debug: log when emotion is missing
+                    print(f"[Emotion] ⚠️ WARNING: No 'emotion' field in landmarks message! Keys: {list(data.keys())}")
+                    if state["current_emotion"] != "neutral":
+                        print(f"[Emotion] Keeping current emotion: '{state['current_emotion']}'")
                 response = {"type": "match"}
 
                 if not frames:
@@ -250,9 +346,11 @@ async def websocket_endpoint(websocket: WebSocket):
                     state["dyn_frames"]       = []
                     state["dyn_frames_other"] = []
 
-                    # Feed raw word into cleaner — cleaned output comes
-                    # back asynchronously via on_cleaned → pending_chunks
-                    cleaner.push(recognized)
+                    # Feed raw word into cleaner with current emotion
+                    # cleaned output comes back asynchronously via on_sentence
+                    current_emotion = state["current_emotion"]
+                    print(f"[Emotion] Pushing word '{recognized}' with emotion: '{current_emotion}'")
+                    cleaner.push(recognized, current_emotion)
 
                 await websocket.send_text(json.dumps(response))
 
