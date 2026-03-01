@@ -180,7 +180,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             "text": text,
                             "emotion": emotion,
                             "audio": audio_b64,
-                            "audio_format": "wav"
+                            "audio_format": "ogg"
                         }
                         send_start_time = time.time()
                         print(f"[TTS TIMING] ⏱️  Sending WebSocket message at {send_start_time:.3f} (audio field present: {bool(audio_b64)})")

@@ -1127,7 +1127,7 @@ export default function SignSpeak() {
           
           const blobStartTime = performance.now();
           const audioBlob = new Blob([audioBytes], { 
-            type: data.audio_format === "wav" ? "audio/wav" : data.audio_format === "ogg" ? "audio/ogg" : data.audio_format === "mp3" ? "audio/mpeg" : "audio/wav" 
+            type: data.audio_format === "ogg" ? "audio/ogg" : data.audio_format === "mp3" ? "audio/mpeg" : data.audio_format === "wav" ? "audio/wav" : "audio/ogg" 
           });
           const blobEndTime = performance.now();
           const blobDuration = blobEndTime - blobStartTime;
