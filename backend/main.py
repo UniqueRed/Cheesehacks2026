@@ -17,7 +17,7 @@ app.add_middleware(
 recognizer = GestureRecognizer()
 connections = {}
 
-MOTION_THRESHOLD = 0.25
+MOTION_THRESHOLD = 0.015
 SIGN_COOLDOWN_SECONDS = 2.0  # seconds before same sign can fire again
 
 def has_motion(buffer):
