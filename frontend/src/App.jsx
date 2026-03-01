@@ -799,6 +799,7 @@ export default function SignSpeak() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [handDetected, setHandDetected] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const currentLandmarksRef = useRef(null);
   const landmarkThrottleRef = useRef(0);
 
@@ -918,6 +919,15 @@ export default function SignSpeak() {
     const cvs = canvasRef.current;
     if (!vid || !cvs) return;
 
+    const handleLoadedMetadata = () => {
+      setVideoReady(true);
+    };
+    
+    vid.addEventListener("loadedmetadata", handleLoadedMetadata);
+    if (vid.readyState >= 2) {
+      setVideoReady(true);
+    }
+
     initMP(vid, cvs, (results, hasHands) => {
       setHandDetected(hasHands);
       if (hasHands) {
@@ -933,6 +943,10 @@ export default function SignSpeak() {
         currentLandmarksRef.current = null;
       }
     });
+
+    return () => {
+      vid.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    };
   }, []);
 
   // ── RECOGNITION BADGE ─────────────────────────────────────────
@@ -1071,6 +1085,16 @@ export default function SignSpeak() {
           <div className="camera-wrap">
             <video ref={videoRef} autoPlay muted playsInline style={{ display: "none" }} />
             <canvas ref={canvasRef} className="camera-canvas" />
+            
+            {/* Face emotion detection - processes video in background */}
+            {videoReady && videoRef.current && (
+              <FacialEmotionDetection
+                videoElement={videoRef.current}
+                onEmotionChange={(emotionData) => {
+                  setCurrentEmotion(emotionData);
+                }}
+              />
+            )}
 
             {recognized && (
               <div className={`recog-badge ${recognized ? "show" : ""}`}>
@@ -1128,14 +1152,6 @@ export default function SignSpeak() {
               </button>
             </div>
           </div>
-
-          {/* Face emotion detection - processes video in background */}
-          <FacialEmotionDetection
-            videoElement={videoRef.current}
-            onEmotionChange={(emotionData) => {
-              setCurrentEmotion(emotionData);
-            }}
-          />
         </div>
 
         {/* RIGHT: SLIDES + CAPTIONS */}
