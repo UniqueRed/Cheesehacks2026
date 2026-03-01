@@ -1586,6 +1586,8 @@ export default function SignSpeak() {
             setOpenUploadFlow(true);
             setActiveTab("presentations");
           }}
+          presentations={presentations}
+          speakerProfiles={speakerProfiles}
         />
       )}
 
