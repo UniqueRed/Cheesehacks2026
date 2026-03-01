@@ -47,7 +47,7 @@ class TTSService:
     DEFAULT_MODEL = "gemini-2.5-flash-tts"
     
     # Available Gemini-TTS voices
-    DEFAULT_VOICE = "Orus"
+    DEFAULT_VOICE = "Charon"
     AVAILABLE_VOICES = [
         "Kore", "Aoede", "Callirrhoe", "Puck", "Charon", "Fenrir", "Leda", "Orus", "Zephyr"
     ]

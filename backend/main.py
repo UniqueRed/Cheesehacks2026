@@ -97,7 +97,7 @@ async def websocket_endpoint(websocket: WebSocket):
     def on_sentence(text, emotion):
         loop.call_soon_threadsafe(sentence_queue.put_nowait, (text, emotion))
 
-    cleaner = StreamCleaner(on_word=on_word, on_sentence=on_sentence, sentence_pause=4.0)
+    cleaner = StreamCleaner(on_word=on_word, on_sentence=on_sentence, sentence_pause=2.0)
 
     state = {
         # recording
@@ -420,6 +420,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
             elif msg_type == "reset_cleaner":
                 # Presenter stopped — flush whatever is buffered immediately
+                cleaner.force_flush()
+            elif msg_type == "flush_sentence":
                 cleaner.force_flush()
 
     except WebSocketDisconnect:
