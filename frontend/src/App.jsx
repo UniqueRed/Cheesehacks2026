@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import FacialEmotionDetection from "./components/FacialEmotionDetection";
 import Calibration from "./components/Calibration";
 import DashboardHome from "./components/DashboardHome";
 import PresentationsPage from "./components/PresentationsPage";
@@ -111,7 +112,7 @@ const css = `
     align-items: center;
   }
 
-  /* ── TABS ───────────────────────────────────────────────────── */
+    /* ── TABS ───────────────────────────────────────────────────── */
   .tabs {
     display: flex;
     gap: 4px;
@@ -141,6 +142,8 @@ const css = `
     color: var(--accent);
     border-bottom-color: var(--accent);
   }
+
+
 
   /* ── MAIN ────────────────────────────────────────────────────── */
   .main {
@@ -763,7 +766,7 @@ function loadScript(src) {
 async function initMP(videoEl, canvasEl, onResults) {
   await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js");
   await loadScript(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+    "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js",
   );
 
   const { Hands, HAND_CONNECTIONS } = window;
@@ -779,9 +782,8 @@ async function initMP(videoEl, canvasEl, onResults) {
     minDetectionConfidence: 0.7,
     minTrackingConfidence: 0.5,
   });
+
   hands.onResults((results) => {
-    // Check if canvas is still valid before drawing
-    if (!canvasEl || !canvasEl.getContext) return;
     const ctx = canvasEl.getContext("2d");
     canvasEl.width = results.image.width;
     canvasEl.height = results.image.height;
@@ -828,8 +830,9 @@ async function initMP(videoEl, canvasEl, onResults) {
 async function loadPdfJs() {
   if (window.pdfjsLib) return window.pdfjsLib;
   await loadScript(
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
   );
+
   window.pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
   return window.pdfjsLib;
@@ -913,7 +916,6 @@ export default function SignSpeak() {
   // Camera / MediaPipe
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  //const cameraRef = useRef(null);
   const [handDetected, setHandDetected] = useState(false);
   const currentLandmarksRef = useRef(null);
   const landmarkThrottleRef = useRef(0);
@@ -1008,13 +1010,19 @@ export default function SignSpeak() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(PRESENTATIONS_STORAGE_KEY, JSON.stringify(presentations));
+      localStorage.setItem(
+        PRESENTATIONS_STORAGE_KEY,
+        JSON.stringify(presentations),
+      );
     } catch (_) {}
   }, [presentations]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(speakerProfiles));
+      localStorage.setItem(
+        PROFILES_STORAGE_KEY,
+        JSON.stringify(speakerProfiles),
+      );
     } catch (_) {}
   }, [speakerProfiles]);
 
@@ -1059,7 +1067,7 @@ export default function SignSpeak() {
       setRecLabel(
         data.gesture_type === "static"
           ? "Hold sign steady…"
-          : "Recording dynamic sign…"
+          : "Recording dynamic sign…",
       );
     }
     if (data.type === "recording_done") {
@@ -1074,9 +1082,8 @@ export default function SignSpeak() {
       }
     }
     if (data.type === "templates") setTemplates(data.templates);
-    if (data.type === "deleted") sendWs({ type: "get_templates" });
     if (data.type === "renamed") {
-      setTemplates(prev => {
+      setTemplates((prev) => {
         const next = { ...prev };
         next[data.new_name] = next[data.old_name];
         delete next[data.old_name];
@@ -1084,6 +1091,7 @@ export default function SignSpeak() {
       });
       setEditingName(null);
     }
+    if (data.type === "deleted") sendWs({ type: "get_templates" });
   }
 
   function sendWs(payload) {
@@ -1094,6 +1102,7 @@ export default function SignSpeak() {
 
   // ── MEDIAPIPE ─────────────────────────────────────────────────
   const cameraRef = useRef(null);
+
   useEffect(() => {
     if (activeTab !== "present") {
       setHandDetected(false);
@@ -1119,11 +1128,11 @@ export default function SignSpeak() {
     }
     vid.play().catch(() => {});
 
-    const handleLoadedMetadata = () => {
-    };
+    const handleLoadedMetadata = () => {};
 
     vid.addEventListener("loadedmetadata", handleLoadedMetadata);
     let cameraInstance = null;
+
     initMP(vid, cvs, (results, hasHands) => {
       setHandDetected(hasHands);
       if (hasHands) {
@@ -1132,7 +1141,7 @@ export default function SignSpeak() {
         if (now - landmarkThrottleRef.current < 66) return;
         landmarkThrottleRef.current = now;
         const lmData = results.multiHandLandmarks.map((hand) =>
-          hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z }))
+          hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z })),
         );
         sendWs({ type: "landmarks", landmarks: lmData });
       } else {
@@ -1191,18 +1200,40 @@ export default function SignSpeak() {
   async function loadPdfDocument(fileBuffer) {
     const pdfjsLib = await loadPdfJs();
     const doc = await pdfjsLib.getDocument({ data: fileBuffer }).promise;
+
     setPdfDoc(doc);
     setCurrentPage(1);
     renderPage(doc, 1);
   }
 
+  async function renderPage(doc, pageNum) {
+    const page = await doc.getPage(pageNum);
+    const container = slideCanvasRef.current?.parentElement;
+    if (!container) return;
+    const scale = Math.min(
+      (container.clientWidth - 48) / page.getViewport({ scale: 1 }).width,
+      (container.clientHeight - 48) / page.getViewport({ scale: 1 }).height,
+    );
+    const vp = page.getViewport({ scale });
+    const cvs = slideCanvasRef.current;
+    cvs.width = vp.width;
+    cvs.height = vp.height;
+    await page.render({ canvasContext: cvs.getContext("2d"), viewport: vp })
+      .promise;
+  }
+
   async function handlePdfLoad(e) {
     const file = e.target.files[0];
+
     if (!file) return;
+
     try {
       const buf = await file.arrayBuffer();
+
       await loadPdfDocument(buf);
+
       setPresentationLoadError("");
+
       setSelectedPresentation(null);
     } catch (_) {
       setPresentationLoadError("Could not load that PDF.");
@@ -1213,33 +1244,47 @@ export default function SignSpeak() {
     if (activeTab !== "present" || !selectedPresentation) return;
 
     let cancelled = false;
+
     const loadSelectedPresentation = async () => {
       const fileName = selectedPresentation.fileName || "";
+
       const isPdf = fileName.toLowerCase().endsWith(".pdf");
+
       if (!isPdf) {
         if (!cancelled) {
           setPdfDoc(null);
+
           setCurrentPage(1);
-          setPresentationLoadError("This presentation type is not supported in viewer yet. Please upload a PDF.");
+
+          setPresentationLoadError(
+            "This presentation type is not supported in viewer yet. Please upload a PDF.",
+          );
         }
+
         return;
       }
 
       try {
         const buffer = dataUrlToArrayBuffer(selectedPresentation.fileData);
+
         if (cancelled) return;
+
         await loadPdfDocument(buffer);
+
         if (!cancelled) setPresentationLoadError("");
       } catch (_) {
         if (!cancelled) {
           setPdfDoc(null);
+
           setCurrentPage(1);
+
           setPresentationLoadError("Could not load the selected presentation.");
         }
       }
     };
 
     loadSelectedPresentation();
+
     return () => {
       cancelled = true;
     };
@@ -1247,24 +1292,9 @@ export default function SignSpeak() {
 
   useEffect(() => {
     if (activeTab !== "present" || !pdfDoc || !slideCanvasRef.current) return;
+
     renderPage(pdfDoc, currentPage);
   }, [activeTab, pdfDoc, currentPage]);
-
-  async function renderPage(doc, pageNum) {
-    const page = await doc.getPage(pageNum);
-    const container = slideCanvasRef.current?.parentElement;
-    if (!container) return;
-    const scale = Math.min(
-      (container.clientWidth - 48) / page.getViewport({ scale: 1 }).width,
-      (container.clientHeight - 48) / page.getViewport({ scale: 1 }).height
-    );
-    const vp = page.getViewport({ scale });
-    const cvs = slideCanvasRef.current;
-    cvs.width = vp.width;
-    cvs.height = vp.height;
-    await page.render({ canvasContext: cvs.getContext("2d"), viewport: vp })
-      .promise;
-  }
 
   function prevSlide() {
     if (!pdfDoc || currentPage <= 1) return;
@@ -1321,9 +1351,7 @@ export default function SignSpeak() {
 
         <div className="status-pill">
           <div
-            className={`status-dot ${
-              wsStatus === "connected" ? "connected" : ""
-            }`}
+            className={`status-dot ${wsStatus === "connected" ? "connected" : ""}`}
           />
           {wsStatus === "connected" ? "Connected" : "Disconnected"}
         </div>
@@ -1426,7 +1454,9 @@ export default function SignSpeak() {
       )}
 
       {/* MAIN */}
+
       {activeTab === "present" && (
+
       <div className="main">
         {/* LEFT: CAMERA */}
         <div className="left-panel">
@@ -1519,15 +1549,21 @@ export default function SignSpeak() {
                 📸 Static
               </button>
               <button
-                className={`btn ${
-                  isRecordingDynamic ? "btn-danger" : "btn-default"
-                }`}
+                className={`btn ${isRecordingDynamic ? "btn-danger" : "btn-default"}`}
                 onClick={toggleDynamic}
               >
                 {isRecordingDynamic ? "⏹ Stop" : "⏺ Dynamic"}
               </button>
             </div>
           </div>
+
+          {/* Face emotion detection - processes video in background */}
+          <FacialEmotionDetection
+            videoElement={videoRef.current}
+            onEmotionChange={(emotionData) => {
+              setCurrentEmotion(emotionData);
+            }}
+          />
         </div>
 
         {/* RIGHT: SLIDES + CAPTIONS */}
@@ -1543,9 +1579,6 @@ export default function SignSpeak() {
                   Upload a PDF to display slides. Use the camera to sign and
                   speak your content.
                 </p>
-                {presentationLoadError && (
-                  <p style={{ marginTop: 8, color: "var(--red)" }}>{presentationLoadError}</p>
-                )}
                 <label
                   className="btn btn-primary"
                   style={{ cursor: "pointer", marginTop: 4 }}
@@ -1619,7 +1652,8 @@ export default function SignSpeak() {
           </div>
         </div>
       </div>
-      )}
+
+)}
 
       {/* CALIBRATION TAB - Rendered separately to avoid interfering with Dashboard video */}
       {activeTab === "calibration" && (
@@ -1637,6 +1671,7 @@ export default function SignSpeak() {
           <Calibration />
         </div>
       )}
+
 
       {/* VOICE MODAL */}
       {voiceOpen && (
@@ -1751,7 +1786,7 @@ export default function SignSpeak() {
               ) : (
                 Object.entries(templates).map(([name, info]) => (
                   <div className="template-row" key={name}>
-                    <div className="template-left">
+                                        <div className="template-left">
                       <div className="template-top">
                         {editingName === name ? (
                           <input
@@ -1776,8 +1811,10 @@ export default function SignSpeak() {
                         </span>
                       </div>
                       <TrainingProgress recordings={info.recordings} needed={info.needed} />
+
                     </div>
-                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+
+                                        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                       {editingName === name ? (
                         <>
                           <button

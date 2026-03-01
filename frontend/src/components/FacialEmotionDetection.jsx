@@ -27,7 +27,7 @@ import {
   FilesetResolver,
   FaceLandmarker,
 } from "@mediapipe/tasks-vision";
-import "./FacialEmotionDetection.css";
+import "../components/FacialEmotionDetection.css";
 
 // ============ THRESHOLDS — tune these for your face ============
 // All names now match the FER7 emotions used in classifyEmotion below.
