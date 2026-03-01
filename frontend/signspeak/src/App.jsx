@@ -828,8 +828,65 @@ export default function SignSpeak() {
   const [pitch, setPitch] = useState(1);
   const [volume, setVolume] = useState(1);
 
-  const [editingName, setEditingName] = useState(null); // which sign is being edited
+  const [editingName, setEditingName] = useState(null);
   const [editValue, setEditValue] = useState("");
+
+  // ── SPEECH BUFFER ─────────────────────────────────────────────────────────
+  // Words accumulate here. A debounced timer fires speakAccumulated() after
+  // 300ms of silence, speaking the whole sentence as one utterance.
+  // speak_sentence from the backend acts as a hard flush.
+  const speechBufferRef = useRef([]);
+  const speechTimerRef = useRef(null);
+
+  const voiceSettingsRef = useRef({
+    selectedVoice: "",
+    rate: 1,
+    pitch: 1,
+    volume: 1,
+  });
+  useEffect(() => {
+    voiceSettingsRef.current = { selectedVoice, rate, pitch, volume };
+  }, [selectedVoice, rate, pitch, volume]);
+
+  function speakAccumulated() {
+    const text = speechBufferRef.current.join(" ").trim();
+    if (!text) return;
+    window.speechSynthesis.cancel();
+    const {
+      selectedVoice: sv,
+      rate: r,
+      pitch: p,
+      volume: vol,
+    } = voiceSettingsRef.current;
+    const utt = new SpeechSynthesisUtterance(text);
+    const v = window.speechSynthesis.getVoices().find((v) => v.name === sv);
+    if (v) utt.voice = v;
+    utt.rate = r;
+    utt.pitch = p;
+    utt.volume = vol;
+    window.speechSynthesis.speak(utt);
+  }
+
+  function pushToSpeechBuffer(word) {
+    speechBufferRef.current.push(word);
+    clearTimeout(speechTimerRef.current);
+    speechTimerRef.current = setTimeout(() => {
+      speakAccumulated();
+      speechBufferRef.current = [];
+    }, 300);
+  }
+
+  function flushSpeechBuffer() {
+    clearTimeout(speechTimerRef.current);
+    speakAccumulated();
+    speechBufferRef.current = [];
+  }
+
+  function clearSpeechBuffer() {
+    clearTimeout(speechTimerRef.current);
+    speechBufferRef.current = [];
+    window.speechSynthesis.cancel();
+  }
 
   // Inject styles
   useEffect(() => {
@@ -871,10 +928,19 @@ export default function SignSpeak() {
       if (data.recording) setRecLabel(`Recording — ${data.frame_count} frames`);
       if (data.recognized && isPresentingRef.current) {
         showRecog(data.recognized);
-        setCaptionWords((w) => [...w, data.recognized]);
-        speak(data.recognized);
       }
     }
+
+    // caption_word: show immediately in captions, NO speech
+    if (data.type === "caption_word" && isPresentingRef.current) {
+      setCaptionWords((prev) => [...prev, data.word]);
+    }
+
+    // speak_sentence: backend flushed a full sentence — speak it all at once
+    if (data.type === "speak_sentence" && isPresentingRef.current) {
+      speak(data.text);
+    }
+
     if (data.type === "recording_started") {
       setRecLabel(
         data.gesture_type === "static"
@@ -1007,15 +1073,16 @@ export default function SignSpeak() {
       if (e.key === "ArrowLeft") prevSlide();
       if (e.key === " ") {
         e.preventDefault();
-        setIsPresenting((p) => !p);
+        togglePresenting();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [pdfDoc, currentPage]);
+  }, [pdfDoc, currentPage, isPresenting]);
 
-  // TTS
+  // TTS — only used directly for the voice test button now
   function speak(text) {
+    window.speechSynthesis.cancel(); // cancel any in-progress utterance
     const utt = new SpeechSynthesisUtterance(text);
     const v = window.speechSynthesis
       .getVoices()
@@ -1025,6 +1092,15 @@ export default function SignSpeak() {
     utt.pitch = pitch;
     utt.volume = volume;
     window.speechSynthesis.speak(utt);
+  }
+
+  function togglePresenting() {
+    const next = !isPresenting;
+    setIsPresenting(next);
+    if (!next) {
+      sendWs({ type: "reset_cleaner" });
+      clearSpeechBuffer();
+    }
   }
 
   const showRec = isRecordingStatic || isRecordingDynamic;
@@ -1191,7 +1267,7 @@ export default function SignSpeak() {
             <div className="divider" />
             <button
               className={`btn ${isPresenting ? "btn-danger" : "btn-success"}`}
-              onClick={() => setIsPresenting((p) => !p)}
+              onClick={togglePresenting}
             >
               {isPresenting ? "Stop Presenting" : "Start Presenting"}
             </button>

@@ -20,10 +20,11 @@ import os
 import numpy as np
 from features import extract_features, extract_dynamic_frame
 
-TEMPLATES_FILE       = "templates.json"
-RECORDINGS_PER_SIGN  = 15
-MIN_RECORDINGS       = 3    # minimum to start classifying
-MIN_CONFIDENCE       = 0.60
+TEMPLATES_FILE           = "templates.json"
+RECORDINGS_PER_SIGN      = 15
+MIN_RECORDINGS           = 3     # minimum to start classifying
+MIN_CONFIDENCE_STATIC    = 0.55  # SVM probability — well calibrated, can be tighter
+MIN_CONFIDENCE_DYNAMIC   = 0.35  # DTW confidence — less calibrated, needs to be looser
 
 
 # ─── DTW ─────────────────────────────────────────────────────────────────────
@@ -225,13 +226,13 @@ class GestureRecognizer:
                 dist       = float(dists[0][0])
                 # Convert distance to confidence: close = high confidence
                 conf = float(np.exp(-dist * 0.5))
-                if conf >= MIN_CONFIDENCE:
+                if conf >= MIN_CONFIDENCE_STATIC:
                     return self.label_map[0], conf
             else:
                 proba    = self.classifier.predict_proba([vec])[0]
                 best_idx = int(np.argmax(proba))
                 conf     = float(proba[best_idx])
-                if conf >= MIN_CONFIDENCE and best_idx in self.label_map:
+                if conf >= MIN_CONFIDENCE_STATIC and best_idx in self.label_map:
                     return self.label_map[best_idx], conf
 
         except Exception as e:
@@ -369,7 +370,7 @@ class GestureRecognizer:
         if best_score <= best_thresh:
             # Confidence: 1.0 at dist=0, approaches 0 at dist=threshold
             confidence = max(0.0, 1.0 - (best_score / best_thresh))
-            if confidence >= MIN_CONFIDENCE:
+            if confidence >= MIN_CONFIDENCE_DYNAMIC:
                 return best_name, confidence
 
         return None, 0.0

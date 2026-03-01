@@ -128,65 +128,82 @@ def clean(raw_words):
 
 class StreamCleaner:
     """
-    Accumulates raw recognized words in real time, then cleans and
-    flushes them after a silence period or on demand.
+    Accumulates raw recognized words in real time.
 
-    Usage:
-        cleaner = StreamCleaner(on_flushed=my_callback)
-        cleaner.push("we")
-        cleaner.push("we")
-        cleaner.push("went")
-        # ... 2s of silence ...
-        # my_callback("we went") is called automatically
+    Behavior:
+      - Every new word is immediately cleaned against the running buffer
+        and returned so captions can update live.
+      - After SENTENCE_PAUSE seconds of silence, the full accumulated
+        sentence is cleaned, spoken as one utterance, then the buffer resets.
+      - force_flush() triggers this immediately (e.g. presenter stops).
 
-        # Or manually:
-        cleaner.force_flush()
+    This means captions grow word by word in real time, and speech fires
+    once per natural sentence pause — not fragmented per chunk.
     """
 
-    def __init__(self, on_flushed, flush_after=FLUSH_AFTER):
+    def __init__(self, on_word, on_sentence, sentence_pause=4.0):
         """
-        on_flushed: callable(cleaned_text: str) — called when a chunk is ready.
-        flush_after: seconds of silence before auto-flush.
+        on_word(word):      called immediately when a clean word should
+                            be appended to live captions.
+        on_sentence(text):  called after a pause with the full cleaned
+                            sentence for TTS speech.
+        sentence_pause:     seconds of silence before speaking the sentence.
         """
-        self.on_flushed  = on_flushed
-        self.flush_after = flush_after
-        self._buffer     = []
-        self._lock       = threading.Lock()
-        self._timer      = None
+        self.on_word      = on_word
+        self.on_sentence  = on_sentence
+        self.pause        = sentence_pause
+        self._raw         = []   # all raw words this sentence
+        self._lock        = threading.Lock()
+        self._timer       = None
 
     def push(self, word):
         """
-        Push a newly recognized word into the buffer.
-        Resets the silence timer.
+        Push a new raw recognized word.
+        Returns the cleaned word to show in captions immediately (or None if noise).
         """
         word = word.strip()
         if not word:
             return
 
         with self._lock:
-            self._buffer.append(word)
+            # Check if this word is noise relative to recent raw words
+            recent = self._raw[-DEDUP_WINDOW:] if self._raw else []
 
+            # Consecutive duplicate
+            if recent and recent[-1].lower() == word.lower():
+                self._reset_timer()
+                return
+
+            # Near-duplicate (unless exempt)
+            if word.lower() not in DEDUP_EXEMPT:
+                recent_lower = [w.lower() for w in recent]
+                if word.lower() in recent_lower:
+                    self._reset_timer()
+                    return
+
+            # Word is clean — add to buffer
+            self._raw.append(word)
+
+        # Emit immediately for live captions
+        self.on_word(word)
         self._reset_timer()
 
     def force_flush(self):
-        """
-        Immediately clean and emit whatever is buffered.
-        Call when presenter stops.
-        """
+        """Immediately speak whatever is buffered. Call when presenter stops."""
         self._cancel_timer()
-        self._do_flush()
+        self._speak_sentence()
 
     def reset(self):
-        """Clear buffer without emitting."""
+        """Clear everything silently."""
         self._cancel_timer()
         with self._lock:
-            self._buffer.clear()
+            self._raw.clear()
 
     # ── INTERNALS ────────────────────────────────────────────────────────────
 
     def _reset_timer(self):
         self._cancel_timer()
-        t = threading.Timer(self.flush_after, self._do_flush)
+        t = threading.Timer(self.pause, self._speak_sentence)
         t.daemon = True
         t.start()
         self._timer = t
@@ -196,48 +213,14 @@ class StreamCleaner:
             self._timer.cancel()
             self._timer = None
 
-    def _do_flush(self):
+    def _speak_sentence(self):
         with self._lock:
-            if not self._buffer:
+            if not self._raw:
                 return
-            words          = list(self._buffer)
-            self._buffer   = []
+            words      = list(self._raw)
+            self._raw  = []
 
         cleaned = clean(words)
         if cleaned:
-            print(f"Cleaner: {words} → '{cleaned}'")
-            self.on_flushed(cleaned)
-
-
-# ─── QUICK TEST ───────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    cases = [
-        (["we", "we", "went", "to", "the", "the", "store", "the", "the", "is"],
-         "we went to the store"),
-        (["hello", "hello", "my", "name", "is", "is", "john"],
-         "hello my name is john"),
-        (["built", "on", "on", "react"],
-         "built on react"),
-        (["the", "the", "the"],
-         ""),
-        (["we", "are", "presenting", "today"],
-         "we are presenting today"),
-        (["this", "is", "a", "great", "project", "a", "a", "the"],
-         "this is a great project"),
-    ]
-
-    print("Running cleaner tests...\n")
-    all_passed = True
-    for words, expected in cases:
-        result = clean(words)
-        status = "✓" if result == expected else "✗"
-        if result != expected:
-            all_passed = False
-        print(f"  {status} {words}")
-        print(f"      got:      '{result}'")
-        if result != expected:
-            print(f"      expected: '{expected}'")
-        print()
-
-    print("All tests passed!" if all_passed else "Some tests failed.")
+            print(f"Speaking: '{cleaned}'")
+            self.on_sentence(cleaned)

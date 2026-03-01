@@ -9,6 +9,7 @@ Architecture:
 """
 
 import json
+import asyncio
 import numpy as np
 from collections import deque, Counter
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -23,14 +24,14 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 recognizer = GestureRecognizer()
 
 # ─── TUNING ───────────────────────────────────────────────────────────────────
-VOTE_WINDOW      = 16
-VOTE_THRESHOLD   = 0.72
-DYN_ONSET_VEL    = 0.018
-DYN_END_VEL      = 0.010
-DYN_END_FRAMES   = 7
-DYN_MIN_FRAMES   = 5
-DYN_MAX_FRAMES   = 50
-COOLDOWN_FRAMES  = 8
+VOTE_WINDOW      = 10    # was 16: fires in ~0.67s at 15fps instead of ~1s
+VOTE_THRESHOLD   = 0.60  # was 0.72: 6/10 frames must agree, more lenient
+DYN_ONSET_VEL    = 0.015  # was 0.018: detect motion onset sooner
+DYN_END_VEL      = 0.012  # was 0.010: slightly easier to register as quiet
+DYN_END_FRAMES   = 4      # was 7: close segment after 4 quiet frames not 7
+DYN_MIN_FRAMES   = 4      # was 5: attempt recognition on shorter segments
+DYN_MAX_FRAMES   = 40     # was 50: tighter hard cap
+COOLDOWN_FRAMES  = 6      # was 8: recover faster between signs
 
 
 # ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -50,14 +51,19 @@ def to_lm(lst):
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
 
-    # Cleaned chunks produced by the background cleaner thread
-    # are appended here and sent on the next frame tick.
-    pending_chunks = []
+    # Two queues: one for live caption words, one for TTS sentences.
+    # Both are fed from background threads via call_soon_threadsafe.
+    word_queue     = asyncio.Queue()
+    sentence_queue = asyncio.Queue()
+    loop = asyncio.get_event_loop()
 
-    def on_cleaned(text):
-        pending_chunks.append(text)
+    def on_word(word):
+        loop.call_soon_threadsafe(word_queue.put_nowait, word)
 
-    cleaner = StreamCleaner(on_flushed=on_cleaned, flush_after=2.0)
+    def on_sentence(text):
+        loop.call_soon_threadsafe(sentence_queue.put_nowait, text)
+
+    cleaner = StreamCleaner(on_word=on_word, on_sentence=on_sentence, sentence_pause=4.0)
 
     state = {
         # recording
@@ -81,20 +87,38 @@ async def websocket_endpoint(websocket: WebSocket):
         "cooldown":            0,
     }
 
+    async def send_words():
+        """Sends live caption words immediately as they're cleaned."""
+        try:
+            while True:
+                word = await word_queue.get()
+                await websocket.send_text(json.dumps({
+                    "type": "caption_word",
+                    "word": word,
+                }))
+        except Exception:
+            pass
+
+    async def send_sentences():
+        """Sends full cleaned sentences for TTS after natural pauses."""
+        try:
+            while True:
+                text = await sentence_queue.get()
+                await websocket.send_text(json.dumps({
+                    "type": "speak_sentence",
+                    "text": text,
+                }))
+        except Exception:
+            pass
+
+    word_task     = asyncio.create_task(send_words())
+    sentence_task = asyncio.create_task(send_sentences())
+
     try:
         while True:
             raw      = await websocket.receive_text()
             data     = json.loads(raw)
             msg_type = data.get("type")
-
-            # ── FLUSH PENDING CLEANED CHUNKS ──────────────────────────────
-            # Check on every tick so chunks get sent promptly.
-            for chunk in list(pending_chunks):
-                await websocket.send_text(json.dumps({
-                    "type": "cleaned_chunk",
-                    "text": chunk,
-                }))
-            pending_chunks.clear()
 
             # ── LANDMARK FRAME ─────────────────────────────────────────────
             if msg_type == "landmarks":
@@ -178,6 +202,9 @@ async def websocket_endpoint(websocket: WebSocket):
                 if not recognized:
                     if not state["dyn_capturing"]:
                         if vel > DYN_ONSET_VEL:
+                            # Clear stale static votes so pre-motion frames
+                            # don't dilute the vote for a static sign held after motion
+                            state["vote_buf"].clear()
                             state["dyn_capturing"]    = True
                             state["dyn_frames"]       = [curr_lm]
                             state["dyn_frames_other"] = [other_lm]
@@ -298,10 +325,13 @@ async def websocket_endpoint(websocket: WebSocket):
                 cleaner.force_flush()
 
     except WebSocketDisconnect:
-        cleaner.reset()
+        pass
     except Exception as e:
         print(f"WS error: {e}")
         import traceback; traceback.print_exc()
+    finally:
+        word_task.cancel()
+        sentence_task.cancel()
         cleaner.reset()
 
 
