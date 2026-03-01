@@ -1,3 +1,4 @@
+// MAIN
 import { useState, useEffect, useRef, useCallback } from "react";
 import FacialEmotionDetection from "./components/FacialEmotionDetection";
 import Calibration from "./components/Calibration";
