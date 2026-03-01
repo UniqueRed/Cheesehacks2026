@@ -117,7 +117,7 @@ export default function PresentationsPage({
             <div className="card" key={item.id}>
               <h3 className="card-title">{item.title}</h3>
               <p className="card-meta">
-                {item.date} • {item.duration} • {item.slides} slides • {item.profile}
+                {item.date} • {item.profile}
               </p>
               <span className="badge badge-ready">{item.status}</span>
               <div className="card-actions" style={{ marginTop: 10 }}>

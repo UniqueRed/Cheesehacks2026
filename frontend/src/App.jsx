@@ -835,6 +835,22 @@ async function loadPdfJs() {
   return window.pdfjsLib;
 }
 
+function dataUrlToArrayBuffer(dataUrl) {
+  if (typeof dataUrl !== "string" || !dataUrl.includes(",")) {
+    throw new Error("Invalid data URL");
+  }
+  const [meta, payload] = dataUrl.split(",", 2);
+  if (!meta.includes(";base64")) {
+    throw new Error("Unsupported data URL encoding");
+  }
+  const binary = atob(payload);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 const PRESENTATIONS_STORAGE_KEY = "signbridge_presentations";
 const PROFILES_STORAGE_KEY = "signbridge_profiles";
 
@@ -927,6 +943,7 @@ export default function SignSpeak() {
   const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "present" | "presentations" | "speakerProfiles" | "calibration"
   const [openUploadFlow, setOpenUploadFlow] = useState(false);
   const [selectedPresentation, setSelectedPresentation] = useState(null);
+  const [presentationLoadError, setPresentationLoadError] = useState("");
   const [presentations, setPresentations] = useState(() => {
     try {
       const raw = localStorage.getItem(PRESENTATIONS_STORAGE_KEY);
@@ -1171,16 +1188,67 @@ export default function SignSpeak() {
   }
 
   // ── PDF ───────────────────────────────────────────────────────
-  async function handlePdfLoad(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+  async function loadPdfDocument(fileBuffer) {
     const pdfjsLib = await loadPdfJs();
-    const buf = await file.arrayBuffer();
-    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    const doc = await pdfjsLib.getDocument({ data: fileBuffer }).promise;
     setPdfDoc(doc);
     setCurrentPage(1);
     renderPage(doc, 1);
   }
+
+  async function handlePdfLoad(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const buf = await file.arrayBuffer();
+      await loadPdfDocument(buf);
+      setPresentationLoadError("");
+      setSelectedPresentation(null);
+    } catch (_) {
+      setPresentationLoadError("Could not load that PDF.");
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab !== "present" || !selectedPresentation) return;
+
+    let cancelled = false;
+    const loadSelectedPresentation = async () => {
+      const fileName = selectedPresentation.fileName || "";
+      const isPdf = fileName.toLowerCase().endsWith(".pdf");
+      if (!isPdf) {
+        if (!cancelled) {
+          setPdfDoc(null);
+          setCurrentPage(1);
+          setPresentationLoadError("This presentation type is not supported in viewer yet. Please upload a PDF.");
+        }
+        return;
+      }
+
+      try {
+        const buffer = dataUrlToArrayBuffer(selectedPresentation.fileData);
+        if (cancelled) return;
+        await loadPdfDocument(buffer);
+        if (!cancelled) setPresentationLoadError("");
+      } catch (_) {
+        if (!cancelled) {
+          setPdfDoc(null);
+          setCurrentPage(1);
+          setPresentationLoadError("Could not load the selected presentation.");
+        }
+      }
+    };
+
+    loadSelectedPresentation();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, selectedPresentation]);
+
+  useEffect(() => {
+    if (activeTab !== "present" || !pdfDoc || !slideCanvasRef.current) return;
+    renderPage(pdfDoc, currentPage);
+  }, [activeTab, pdfDoc, currentPage]);
 
   async function renderPage(doc, pageNum) {
     const page = await doc.getPage(pageNum);
@@ -1475,6 +1543,9 @@ export default function SignSpeak() {
                   Upload a PDF to display slides. Use the camera to sign and
                   speak your content.
                 </p>
+                {presentationLoadError && (
+                  <p style={{ marginTop: 8, color: "var(--red)" }}>{presentationLoadError}</p>
+                )}
                 <label
                   className="btn btn-primary"
                   style={{ cursor: "pointer", marginTop: 4 }}
