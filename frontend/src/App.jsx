@@ -48,152 +48,60 @@ const css = `
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── LAYOUT ─────────────────────────────────────────────────── */
-  .app {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-  }
+  .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
   /* ── HEADER ─────────────────────────────────────────────────── */
   .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    height: 54px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; height: 54px; background: var(--surface);
+    border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50;
   }
-
-  .logo {
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: -0.3px;
-    color: var(--text);
-  }
-
-  .logo span {
-    color: var(--accent);
-  }
-
+  .logo { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); }
+  .logo span { color: var(--accent); }
   .status-pill {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-family: 'Geist Mono', monospace;
-    font-size: 11px;
-    color: var(--text3);
-    background: var(--surface2);
-    padding: 5px 12px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--text3);
+    background: var(--surface2); padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border);
   }
-
   .status-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--red);
-    flex-shrink: 0;
-    transition: background 0.3s, box-shadow 0.3s;
+    width: 7px; height: 7px; border-radius: 50%; background: var(--red);
+    flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s;
   }
+  .status-dot.connected { background: var(--green); box-shadow: 0 0 0 2px var(--green-bg); }
+  .header-right { display: flex; gap: 8px; align-items: center; }
 
-  .status-dot.connected {
-    background: var(--green);
-    box-shadow: 0 0 0 2px var(--green-bg);
-  }
-
-  .header-right {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-    /* ── TABS ───────────────────────────────────────────────────── */
+  /* ── TABS ───────────────────────────────────────────────────── */
   .tabs {
-    display: flex;
-    gap: 4px;
-    padding: 0 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
+    display: flex; gap: 4px; padding: 0 20px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
   }
-
   .tab {
-    padding: 12px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text3);
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    font-family: 'Literata', serif;
+    padding: 12px 20px; font-size: 13px; font-weight: 500; color: var(--text3);
+    background: transparent; border: none; border-bottom: 2px solid transparent;
+    cursor: pointer; transition: all 0.15s ease; font-family: 'Literata', serif;
   }
-
-  .tab:hover {
-    color: var(--text2);
-  }
-
-  .tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
-
-
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
   /* ── MAIN ────────────────────────────────────────────────────── */
-  .main {
-    display: grid;
-    grid-template-columns: 360px 1fr;
-    flex: 1;
-    overflow: hidden;
-  }
+  .main { display: grid; grid-template-columns: 360px 1fr; flex: 1; overflow: hidden; }
 
   /* ── LEFT PANEL ──────────────────────────────────────────────── */
   .left-panel {
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid var(--border);
-    background: var(--surface);
-    overflow: hidden;
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--border); background: var(--surface); overflow: hidden;
   }
-
   .panel-label {
-    padding: 10px 16px;
-    font-family: 'Geist Mono', monospace;
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--text3);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--surface2);
+    padding: 10px 16px; font-family: 'Geist Mono', monospace; font-size: 10px;
+    font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text3);
+    border-bottom: 1px solid var(--border); display: flex; align-items: center;
+    justify-content: space-between; background: var(--surface2);
   }
-
-  .hand-badge {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: var(--green);
-    font-size: 10px;
-  }
-
+  .hand-badge { display: flex; align-items: center; gap: 5px; color: var(--green); font-size: 10px; }
   .hand-badge-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--green);
+    width: 6px; height: 6px; border-radius: 50%; background: var(--green);
     animation: pulse 1.5s ease infinite;
   }
-
   @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.5; transform: scale(0.8); }
@@ -201,608 +109,218 @@ const css = `
 
   /* ── CAMERA ──────────────────────────────────────────────────── */
   .camera-wrap {
-    flex: 1;
-    background: #f0ede8;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    flex: 1; background: #f0ede8; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
   }
-
   .camera-canvas {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-    transform: scaleX(-1);
+    width: 100%; height: 100%; object-fit: contain; display: block; transform: scaleX(-1);
   }
-
-  .camera-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    color: var(--text3);
-    font-size: 13px;
-    text-align: center;
-    padding: 24px;
-  }
-
-  .camera-placeholder svg {
-    opacity: 0.3;
-  }
-
   .rec-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    background: var(--red-bg);
-    border: 1px solid rgba(192, 57, 43, 0.25);
-    border-radius: var(--radius-sm);
-    padding: 5px 11px;
-    font-size: 11px;
-    font-family: 'Geist Mono', monospace;
-    color: var(--red);
-    animation: fadeIn 0.2s ease;
+    position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 7px;
+    background: var(--red-bg); border: 1px solid rgba(192, 57, 43, 0.25);
+    border-radius: var(--radius-sm); padding: 5px 11px; font-size: 11px;
+    font-family: 'Geist Mono', monospace; color: var(--red); animation: fadeIn 0.2s ease;
   }
-
   .rec-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--red);
+    width: 7px; height: 7px; border-radius: 50%; background: var(--red);
     animation: blink 1s step-end infinite;
   }
-
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
   .recog-badge {
-    position: absolute;
-    bottom: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-md);
-    padding: 8px 18px;
-    font-size: 17px;
-    font-weight: 500;
-    color: var(--accent);
-    white-space: nowrap;
-    box-shadow: var(--shadow-md);
-    transition: opacity 0.2s, transform 0.2s;
-    opacity: 0;
-    pointer-events: none;
-    letter-spacing: 0.3px;
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-md);
+    padding: 8px 18px; font-size: 17px; font-weight: 500; color: var(--accent);
+    white-space: nowrap; box-shadow: var(--shadow-md); transition: opacity 0.2s, transform 0.2s;
+    opacity: 0; pointer-events: none; letter-spacing: 0.3px;
   }
-
-  .recog-badge.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-2px);
-  }
+  .recog-badge.show { opacity: 1; transform: translateX(-50%) translateY(-2px); }
 
   /* ── RECORD CONTROLS ─────────────────────────────────────────── */
   .record-section {
-    padding: 14px;
-    border-top: 1px solid var(--border);
-    background: var(--surface2);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    padding: 14px; border-top: 1px solid var(--border); background: var(--surface2);
+    display: flex; flex-direction: column; gap: 10px;
   }
-
   .section-title {
-    font-family: 'Geist Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--text3);
-    margin-bottom: 2px;
+    font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 2px;
   }
-
-  .record-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 7px;
-  }
+  .record-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 
   /* ── RIGHT PANEL ─────────────────────────────────────────────── */
-  .right-panel {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: var(--bg);
-  }
-
+  .right-panel { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
   .slide-area {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
-    padding: 24px;
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden; padding: 24px;
   }
-
   .slide-canvas {
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-lg);
-    background: white;
+    max-width: 100%; max-height: 100%; border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg); background: white;
   }
-
-  .upload-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    text-align: center;
-    padding: 32px;
-  }
-
+  .upload-empty { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 32px; }
   .upload-empty-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-lg);
-    background: var(--accent-bg);
-    border: 1px solid var(--accent-dim);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-    font-size: 24px;
+    width: 64px; height: 64px; border-radius: var(--radius-lg); background: var(--accent-bg);
+    border: 1px solid var(--accent-dim); display: flex; align-items: center;
+    justify-content: center; color: var(--accent); font-size: 24px;
   }
-
-  .upload-empty h3 {
-    font-size: 17px;
-    font-weight: 500;
-    color: var(--text);
-    letter-spacing: -0.2px;
-  }
-
-  .upload-empty p {
-    font-size: 13px;
-    color: var(--text3);
-    line-height: 1.7;
-    max-width: 260px;
-    font-style: italic;
-  }
+  .upload-empty h3 { font-size: 17px; font-weight: 500; color: var(--text); letter-spacing: -0.2px; }
+  .upload-empty p { font-size: 13px; color: var(--text3); line-height: 1.7; max-width: 260px; font-style: italic; }
 
   /* ── SLIDE CONTROLS ──────────────────────────────────────────── */
   .slide-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 16px;
-    border-top: 1px solid var(--border);
-    background: var(--surface);
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    border-top: 1px solid var(--border); background: var(--surface);
   }
-
-  .slide-count {
-    font-family: 'Geist Mono', monospace;
-    font-size: 12px;
-    color: var(--text3);
-    min-width: 64px;
-    text-align: center;
-  }
-
-  .slide-spacer {
-    flex: 1;
-  }
-
-  .divider {
-    width: 1px;
-    height: 18px;
-    background: var(--border2);
-    flex-shrink: 0;
-  }
+  .slide-count { font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--text3); min-width: 64px; text-align: center; }
+  .slide-spacer { flex: 1; }
+  .divider { width: 1px; height: 18px; background: var(--border2); flex-shrink: 0; }
 
   /* ── CAPTIONS ────────────────────────────────────────────────── */
   .captions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 18px;
-    min-height: 58px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    overflow: hidden;
+    display: flex; align-items: center; gap: 12px; padding: 12px 18px;
+    min-height: 58px; background: var(--surface); border-top: 1px solid var(--border); overflow: hidden;
   }
-
   .cc-label {
-    font-family: 'Geist Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 1px;
-    color: var(--text3);
-    text-transform: uppercase;
-    flex-shrink: 0;
-    padding-right: 12px;
-    border-right: 1px solid var(--border2);
+    font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--text3);
+    text-transform: uppercase; flex-shrink: 0; padding-right: 12px; border-right: 1px solid var(--border2);
   }
-
   .caption-text {
-    flex: 1;
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    direction: rtl;
-    text-align: left;
-    line-height: 1.4;
+    flex: 1; font-size: 16px; font-weight: 400; color: var(--text); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; line-height: 1.4;
   }
-
-  .caption-empty {
-    color: var(--text3);
-    font-size: 13px;
-    font-style: italic;
-    font-weight: 300;
-  }
-
-  @keyframes wordIn {
-    from { opacity: 0; transform: translateY(3px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .caption-word {
-    animation: wordIn 0.18s ease forwards;
-  }
+  .caption-empty { color: var(--text3); font-size: 13px; font-style: italic; font-weight: 300; }
+  @keyframes wordIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+  .caption-word { animation: wordIn 0.18s ease forwards; }
 
   /* ── BUTTONS ─────────────────────────────────────────────────── */
   .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'Literata', serif;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 7px 14px;
-    border-radius: var(--radius-md);
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    line-height: 1;
-    white-space: nowrap;
-    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px; font-family: 'Literata', serif;
+    font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: var(--radius-md);
+    border: 1px solid transparent; cursor: pointer; transition: all 0.15s ease;
+    line-height: 1; white-space: nowrap; text-decoration: none;
   }
-
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-
-  .btn-default {
-    background: var(--surface);
-    color: var(--text2);
-    border-color: var(--border2);
-  }
-  .btn-default:hover:not(:disabled) {
-    background: var(--surface2);
-    border-color: var(--border2);
-    color: var(--text);
-  }
-
-  .btn-primary {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-  }
+  .btn-default { background: var(--surface); color: var(--text2); border-color: var(--border2); }
+  .btn-default:hover:not(:disabled) { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+  .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
   .btn-primary:hover:not(:disabled) { filter: brightness(0.92); }
-
-  .btn-danger {
-    background: transparent;
-    color: var(--red);
-    border-color: rgba(192, 57, 43, 0.3);
-  }
-  .btn-danger:hover:not(:disabled) {
-    background: var(--red-bg);
-  }
-
-  .btn-success {
-    background: transparent;
-    color: var(--green);
-    border-color: rgba(63, 192, 43, 0.3);
-  }
-  .btn-success:hover:not(:disabled) {
-    background: var(--green-bg);
-  }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--text2);
-    border-color: transparent;
-  }
-  .btn-ghost:hover:not(:disabled) {
-    background: var(--surface2);
-    color: var(--text);
-  }
-
-  .btn-icon {
-    padding: 7px;
-    background: var(--surface);
-    color: var(--text2);
-    border-color: var(--border);
-    border-radius: var(--radius-sm);
-  }
-  .btn-icon:hover:not(:disabled) {
-    background: var(--surface2);
-    border-color: var(--border2);
-    color: var(--text);
-  }
+  .btn-danger { background: transparent; color: var(--red); border-color: rgba(192, 57, 43, 0.3); }
+  .btn-danger:hover:not(:disabled) { background: var(--red-bg); }
+  .btn-success { background: transparent; color: var(--green); border-color: rgba(63, 192, 43, 0.3); }
+  .btn-success:hover:not(:disabled) { background: var(--green-bg); }
+  .btn-ghost { background: transparent; color: var(--text2); border-color: transparent; }
+  .btn-ghost:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
+  .btn-icon { padding: 7px; background: var(--surface); color: var(--text2); border-color: var(--border); border-radius: var(--radius-sm); }
+  .btn-icon:hover:not(:disabled) { background: var(--surface2); border-color: var(--border2); color: var(--text); }
 
   /* ── INPUT ───────────────────────────────────────────────────── */
   .input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-md);
-    padding: 8px 12px;
-    color: var(--text);
-    font-family: 'Literata', serif;
-    font-size: 13px;
-    outline: none;
+    width: 100%; background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius-md); padding: 8px 12px; color: var(--text);
+    font-family: 'Literata', serif; font-size: 13px; outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   .input::placeholder { color: var(--text3); }
-  .input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-bg);
-  }
-
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
   .select {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-md);
-    padding: 8px 12px;
-    color: var(--text);
-    font-family: 'Literata', serif;
-    font-size: 13px;
-    outline: none;
-    cursor: pointer;
+    width: 100%; background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius-md); padding: 8px 12px; color: var(--text);
+    font-family: 'Literata', serif; font-size: 13px; outline: none; cursor: pointer;
     transition: border-color 0.15s;
   }
   .select:focus { border-color: var(--accent); }
 
   /* ── MODAL ───────────────────────────────────────────────────── */
   .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(26, 23, 20, 0.4);
-    backdrop-filter: blur(6px);
-    z-index: 200;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.15s ease;
+    position: fixed; inset: 0; background: rgba(26, 23, 20, 0.4); backdrop-filter: blur(6px);
+    z-index: 200; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.15s ease;
   }
-
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
   .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    padding: 28px;
-    width: 460px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: var(--shadow-lg);
-    animation: slideUp 0.2s ease;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
+    padding: 28px; width: 460px; max-height: 80vh; overflow-y: auto;
+    box-shadow: var(--shadow-lg); animation: slideUp 0.2s ease;
   }
-
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .modal-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.3px;
-    margin-bottom: 4px;
-  }
-
-  .modal-sub {
-    font-size: 13px;
-    color: var(--text3);
-    font-style: italic;
-    margin-bottom: 22px;
-  }
-
+  @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .modal-title { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; margin-bottom: 4px; }
+  .modal-sub { font-size: 13px; color: var(--text3); font-style: italic; margin-bottom: 22px; }
   .modal-footer {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    margin-top: 22px;
-    padding-top: 18px;
-    border-top: 1px solid var(--border);
+    display: flex; gap: 8px; justify-content: flex-end;
+    margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border);
   }
-
   .form-group { margin-bottom: 16px; }
-
   .form-label {
-    display: block;
-    font-family: 'Geist Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--text3);
-    margin-bottom: 6px;
+    display: block; font-family: 'Geist Mono', monospace; font-size: 10px;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 6px;
   }
-
-  .range-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  input[type="range"] {
-    flex: 1;
-    accent-color: var(--accent);
-    cursor: pointer;
-  }
-
-  .range-val {
-    font-family: 'Geist Mono', monospace;
-    font-size: 11px;
-    color: var(--text3);
-    min-width: 36px;
-    text-align: right;
-  }
+  .range-row { display: flex; align-items: center; gap: 12px; }
+  input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; }
+  .range-val { font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--text3); min-width: 36px; text-align: right; }
 
   /* ── TEMPLATE LIST ────────────────────────────────────────────── */
-  .template-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 320px;
-    overflow-y: auto;
-  }
-
+  .template-list { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; }
   .template-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 10px 14px;
-    gap: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 10px 14px; gap: 12px;
   }
+  .template-left { display: flex; flex-direction: column; gap: 6px; flex: 1; overflow: hidden; min-width: 0; }
+  .template-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .template-name { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tag { font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.5px; padding: 3px 7px; border-radius: 999px; border: 1px solid; white-space: nowrap; flex-shrink: 0; }
+  .tag-static { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-dim); }
+  .tag-dynamic { background: #edeaf8; color: #6c47c9; border-color: #d6cff0; }
+  .tag-ready { background: var(--green-bg); color: var(--green); border-color: rgba(58,125,90,0.2); }
+  .tag-pending { background: #fef9ec; color: var(--yellow); border-color: rgba(181,131,10,0.2); }
 
-  .template-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    overflow: hidden;
-  }
-
-  .template-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .tag {
-    font-family: 'Geist Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.5px;
-    padding: 3px 7px;
-    border-radius: 999px;
-    border: 1px solid;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .tag-static {
-    background: var(--accent-bg);
-    color: var(--accent);
-    border-color: var(--accent-dim);
-  }
-
-  .tag-dynamic {
-    background: #edeaf8;
-    color: #6c47c9;
-    border-color: #d6cff0;
-  }
-
-  .tag-ready {
-    background: var(--green-bg);
-    color: var(--green);
-    border-color: rgba(58, 125, 90, 0.2);
-  }
-
-  .tag-pending {
-    background: #fef9ec;
-    color: var(--yellow);
-    border-color: rgba(181, 131, 10, 0.2);
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 32px 20px;
-    color: var(--text3);
-    font-size: 14px;
-    font-style: italic;
-  }
+  /* ── PROGRESS ────────────────────────────────────────────────── */
+  .progress-row { display: flex; align-items: center; gap: 8px; }
+  .progress-bar { flex: 1; height: 4px; background: var(--border); border-radius: 999px; overflow: hidden; max-width: 120px; }
+  .progress-fill { height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.3s ease; }
+  .progress-fill.full { background: var(--green); }
+  .progress-label { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--text3); white-space: nowrap; }
+  .empty-state { text-align: center; padding: 32px 20px; color: var(--text3); font-size: 14px; font-style: italic; }
 
   /* ── SCROLLBAR ────────────────────────────────────────────────── */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
-
-  /* ── UTILS ────────────────────────────────────────────────────── */
-  .sr-only {
-    position: absolute; width: 1px; height: 1px;
-    padding: 0; margin: -1px; overflow: hidden;
-    clip: rect(0,0,0,0); border: 0;
-  }
-
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 `;
 
-// ─── INJECT MEDIAPIPE SCRIPTS ─────────────────────────────────────────────────
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
 function loadScript(src) {
   return new Promise((res, rej) => {
     if (document.querySelector(`script[src="${src}"]`)) return res();
     const s = document.createElement("script");
-    s.src = src;
-    s.crossOrigin = "anonymous";
-    s.onload = res;
-    s.onerror = rej;
+    s.src = src; s.crossOrigin = "anonymous";
+    s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });
 }
 
+// RAF-based loop (teammate's approach — no Camera dependency, works with shared facialStream)
 async function initMP(videoEl, canvasEl, onResults) {
   await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js");
-  await loadScript(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js",
-  );
+  await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js");
 
-  const { Hands, HAND_CONNECTIONS } = window;
-  const { drawConnectors, drawLandmarks } = window;
+  const { Hands, HAND_CONNECTIONS, drawConnectors, drawLandmarks } = window;
 
   const hands = new Hands({
-    locateFile: (file) =>
-      `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
   });
-  hands.setOptions({
-    maxNumHands: 2,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.7,
-    minTrackingConfidence: 0.5,
-  });
+  hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.5 });
 
   hands.onResults((results) => {
     const ctx = canvasEl.getContext("2d");
     canvasEl.width = results.image.width;
     canvasEl.height = results.image.height;
     ctx.drawImage(results.image, 0, 0, canvasEl.width, canvasEl.height);
-
     const hasHands = results.multiHandLandmarks?.length > 0;
     if (hasHands) {
       for (const lm of results.multiHandLandmarks) {
-        drawConnectors(ctx, lm, HAND_CONNECTIONS, {
-          color: "rgba(0, 0, 0, 0.7)",
-          lineWidth: 5,
-        });
-        drawLandmarks(ctx, lm, {
-          color: "#e1e1e1",
-          fillColor: "#e1e1e1",
-          lineWidth: 1,
-          radius: 6,
-        });
+        drawConnectors(ctx, lm, HAND_CONNECTIONS, { color: "rgba(0,0,0,0.7)", lineWidth: 5 });
+        drawLandmarks(ctx, lm, { color: "#e1e1e1", fillColor: "#e1e1e1", lineWidth: 1, radius: 6 });
       }
     }
     onResults(results, hasHands);
@@ -812,46 +330,32 @@ async function initMP(videoEl, canvasEl, onResults) {
   let rafId = null;
   const frameLoop = async () => {
     if (!running) return;
-    if (videoEl && videoEl.readyState >= 2) {
-      await hands.send({ image: videoEl });
-    }
+    if (videoEl && videoEl.readyState >= 2) await hands.send({ image: videoEl });
     rafId = requestAnimationFrame(frameLoop);
   };
   rafId = requestAnimationFrame(frameLoop);
 
   return {
-    stop() {
-      running = false;
-      if (rafId) cancelAnimationFrame(rafId);
-    },
+    stop() { running = false; if (rafId) cancelAnimationFrame(rafId); },
   };
 }
 
-// ─── PDF.JS LOADER ────────────────────────────────────────────────────────────
+// ─── PDF.JS ───────────────────────────────────────────────────────────────────
 async function loadPdfJs() {
   if (window.pdfjsLib) return window.pdfjsLib;
-  await loadScript(
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
-  );
-
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
   window.pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
   return window.pdfjsLib;
 }
 
 function dataUrlToArrayBuffer(dataUrl) {
-  if (typeof dataUrl !== "string" || !dataUrl.includes(",")) {
-    throw new Error("Invalid data URL");
-  }
+  if (typeof dataUrl !== "string" || !dataUrl.includes(",")) throw new Error("Invalid data URL");
   const [meta, payload] = dataUrl.split(",", 2);
-  if (!meta.includes(";base64")) {
-    throw new Error("Unsupported data URL encoding");
-  }
+  if (!meta.includes(";base64")) throw new Error("Unsupported data URL encoding");
   const binary = atob(payload);
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes.buffer;
 }
 
@@ -860,55 +364,39 @@ const PROFILES_STORAGE_KEY = "signbridge_profiles";
 
 // ─── ICONS ───────────────────────────────────────────────────────────────────
 const ChevronLeft = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M15 18l-6-6 6-6" />
   </svg>
 );
 const ChevronRight = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 18l6-6-6-6" />
   </svg>
 );
 const CameraIcon = () => (
-  <svg
-    width="32"
-    height="32"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-  >
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
     <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
     <circle cx="12" cy="13" r="4" />
   </svg>
 );
 
-// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+// ─── TRAINING PROGRESS ───────────────────────────────────────────────────────
+function TrainingProgress({ recordings, needed }) {
+  const pct = Math.min(100, Math.round((recordings / needed) * 100));
+  const full = recordings >= needed;
+  return (
+    <div className="progress-row">
+      <div className="progress-bar">
+        <div className={`progress-fill${full ? " full" : ""}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="progress-label">{recordings} / {needed} examples</span>
+    </div>
+  );
+}
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
 export default function SignSpeak() {
-  const {
-    stream: facialStream,
-    currentEmotion,
-    confidence,
-    isRunning: facialRunning,
-  } = useFacialEmotion();
+  const { stream: facialStream, currentEmotion, confidence, isRunning: facialRunning } = useFacialEmotion();
 
   // WebSocket
   const [wsStatus, setWsStatus] = useState("disconnected");
@@ -920,6 +408,7 @@ export default function SignSpeak() {
   const [handDetected, setHandDetected] = useState(false);
   const currentLandmarksRef = useRef(null);
   const landmarkThrottleRef = useRef(0);
+  const cameraRef = useRef(null);
 
   // Recording
   const [signName, setSignName] = useState("");
@@ -927,15 +416,17 @@ export default function SignSpeak() {
   const [isRecordingDynamic, setIsRecordingDynamic] = useState(false);
   const [recLabel, setRecLabel] = useState("");
 
-  // Recognition
+  // Recognition badge
   const [recognized, setRecognized] = useState("");
   const recognizedTimerRef = useRef(null);
 
   // Captions
   const [captionWords, setCaptionWords] = useState([]);
 
-  // Presenting / TTS
+  // Presenting
   const [isPresenting, setIsPresenting] = useState(false);
+  const isPresentingRef = useRef(false);
+  useEffect(() => { isPresentingRef.current = isPresenting; }, [isPresenting]);
 
   // PDF
   const [pdfDoc, setPdfDoc] = useState(null);
@@ -943,7 +434,7 @@ export default function SignSpeak() {
   const slideCanvasRef = useRef(null);
 
   // Navigation
-  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "present" | "presentations" | "speakerProfiles" | "calibration"
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [openUploadFlow, setOpenUploadFlow] = useState(false);
   const [selectedPresentation, setSelectedPresentation] = useState(null);
   const [presentationLoadError, setPresentationLoadError] = useState("");
@@ -952,9 +443,7 @@ export default function SignSpeak() {
       const raw = localStorage.getItem(PRESENTATIONS_STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
-    } catch (_) {
-      return [];
-    }
+    } catch (_) { return []; }
   });
   const [speakerProfiles, setSpeakerProfiles] = useState(() => {
     try {
@@ -962,17 +451,7 @@ export default function SignSpeak() {
       const parsed = raw ? JSON.parse(raw) : [];
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     } catch (_) {}
-    return [
-      {
-        id: crypto.randomUUID(),
-        name: "Alex",
-        gender: "Neutral",
-        accent: "American",
-        tone: "Confident",
-        rate: 65,
-        isDefault: true,
-      },
-    ];
+    return [{ id: crypto.randomUUID(), name: "Alex", gender: "Neutral", accent: "American", tone: "Confident", rate: 65, isDefault: true }];
   });
 
   // Modals
@@ -987,10 +466,11 @@ export default function SignSpeak() {
   const [pitch, setPitch] = useState(1);
   const [volume, setVolume] = useState(1);
 
-  const [editingName, setEditingName] = useState(null); // which sign is being edited
-  const [editValue, setEditValue] = useState(""); // what value is being edited
+  // Sign rename
+  const [editingName, setEditingName] = useState(null);
+  const [editValue, setEditValue] = useState("");
 
-  // ── STYLES INJECT ─────────────────────────────────────────────
+  // ── STYLES ────────────────────────────────────────────────────
   useEffect(() => {
     const el = document.createElement("style");
     el.textContent = css;
@@ -1009,22 +489,13 @@ export default function SignSpeak() {
     window.speechSynthesis.onvoiceschanged = load;
   }, []);
 
+  // ── PERSIST STORAGE ───────────────────────────────────────────
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        PRESENTATIONS_STORAGE_KEY,
-        JSON.stringify(presentations),
-      );
-    } catch (_) {}
+    try { localStorage.setItem(PRESENTATIONS_STORAGE_KEY, JSON.stringify(presentations)); } catch (_) {}
   }, [presentations]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        PROFILES_STORAGE_KEY,
-        JSON.stringify(speakerProfiles),
-      );
-    } catch (_) {}
+    try { localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(speakerProfiles)); } catch (_) {}
   }, [speakerProfiles]);
 
   // ── WEBSOCKET ─────────────────────────────────────────────────
@@ -1032,44 +503,34 @@ export default function SignSpeak() {
     const ws = new WebSocket("ws://localhost:8000/ws");
     wsRef.current = ws;
     ws.onopen = () => setWsStatus("connected");
-    ws.onclose = () => {
-      setWsStatus("disconnected");
-      setTimeout(connectWs, 2000);
-    };
-    ws.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      handleMessage(data);
-    };
+    ws.onclose = () => { setWsStatus("disconnected"); setTimeout(connectWs, 2000); };
+    ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
   }, []);
 
-  useEffect(() => {
-    connectWs();
-  }, [connectWs]);
+  useEffect(() => { connectWs(); }, [connectWs]);
 
-  // ── MESSAGE HANDLER ────────────────────────────────────────────
-  const isPresentingRef = useRef(false);
-  useEffect(() => {
-    isPresentingRef.current = isPresenting;
-  }, [isPresenting]);
-
+  // ── MESSAGE HANDLER ───────────────────────────────────────────
   function handleMessage(data) {
     if (data.type === "match") {
-      if (data.recording) {
-        setRecLabel(`Recording — ${data.frame_count} frames`);
-      }
+      if (data.recording) setRecLabel(`Recording — ${data.frame_count} frames`);
       if (data.recognized && isPresentingRef.current) {
-        showRecog(data.recognized);
-        setCaptionWords((w) => [...w, data.recognized]);
-        speak(data.recognized);
+        showRecog(data.recognized); // badge only — speech comes from speak_sentence
       }
     }
+
+    // caption_word: clean word → show in captions immediately
+    if (data.type === "caption_word" && isPresentingRef.current) {
+      setCaptionWords((prev) => [...prev, data.word]);
+    }
+
+    // speak_sentence: backend sentence pause → speak the whole accumulated sentence
+    if (data.type === "speak_sentence" && isPresentingRef.current) {
+      speak(data.text);
+    }
+
     if (data.type === "recording_started") {
-      setIsRecordingStatic(data.gesture_type === "static" ? true : false);
-      setRecLabel(
-        data.gesture_type === "static"
-          ? "Hold sign steady…"
-          : "Recording dynamic sign…",
-      );
+      setIsRecordingStatic(data.gesture_type === "static");
+      setRecLabel(data.gesture_type === "static" ? "Hold sign steady…" : "Recording dynamic sign…");
     }
     if (data.type === "recording_done") {
       setIsRecordingStatic(false);
@@ -1083,6 +544,7 @@ export default function SignSpeak() {
       }
     }
     if (data.type === "templates") setTemplates(data.templates);
+    if (data.type === "deleted") sendWs({ type: "get_templates" });
     if (data.type === "renamed") {
       setTemplates((prev) => {
         const next = { ...prev };
@@ -1092,29 +554,21 @@ export default function SignSpeak() {
       });
       setEditingName(null);
     }
-    if (data.type === "deleted") sendWs({ type: "get_templates" });
   }
 
   function sendWs(payload) {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (wsRef.current?.readyState === WebSocket.OPEN)
       wsRef.current.send(JSON.stringify(payload));
-    }
   }
 
   // ── MEDIAPIPE ─────────────────────────────────────────────────
-  const cameraRef = useRef(null);
-
   useEffect(() => {
     if (activeTab !== "present") {
       setHandDetected(false);
       currentLandmarksRef.current = null;
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
+      if (videoRef.current) videoRef.current.srcObject = null;
       if (cameraRef.current) {
-        try {
-          cameraRef.current.stop();
-        } catch (_) {}
+        try { cameraRef.current.stop(); } catch (_) {}
         cameraRef.current = null;
       }
       return;
@@ -1124,14 +578,9 @@ export default function SignSpeak() {
     const cvs = canvasRef.current;
     if (!vid || !cvs || !facialStream) return;
 
-    if (vid.srcObject !== facialStream) {
-      vid.srcObject = facialStream;
-    }
+    if (vid.srcObject !== facialStream) vid.srcObject = facialStream;
     vid.play().catch(() => {});
 
-    const handleLoadedMetadata = () => {};
-
-    vid.addEventListener("loadedmetadata", handleLoadedMetadata);
     let cameraInstance = null;
 
     initMP(vid, cvs, (results, hasHands) => {
@@ -1142,32 +591,18 @@ export default function SignSpeak() {
         if (now - landmarkThrottleRef.current < 66) return;
         landmarkThrottleRef.current = now;
         const lmData = results.multiHandLandmarks.map((hand) =>
-          hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z })),
+          hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z }))
         );
         sendWs({ type: "landmarks", landmarks: lmData });
       } else {
         currentLandmarksRef.current = null;
       }
     })
-      .then((camera) => {
-        cameraInstance = camera;
-        cameraRef.current = camera;
-      })
-      .catch((err) => {
-        console.error("MediaPipe initialization error:", err);
-      });
+      .then((camera) => { cameraInstance = camera; cameraRef.current = camera; })
+      .catch((err) => console.error("MediaPipe init error:", err));
 
     return () => {
-      vid.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      // Stop the camera when component unmounts or when switching away
-      if (cameraInstance) {
-        try {
-          cameraInstance.stop();
-        } catch (e) {
-          // Ignore errors when stopping
-        }
-        cameraRef.current = null;
-      }
+      if (cameraInstance) { try { cameraInstance.stop(); } catch (_) {} cameraRef.current = null; }
       vid.srcObject = null;
     };
   }, [activeTab, facialStream]);
@@ -1182,8 +617,7 @@ export default function SignSpeak() {
   // ── RECORDING ─────────────────────────────────────────────────
   function recordStatic() {
     if (!signName.trim()) return alert("Enter a sign name first.");
-    if (!currentLandmarksRef.current)
-      return alert("Make sure your hand is visible.");
+    if (!currentLandmarksRef.current) return alert("Make sure your hand is visible.");
     sendWs({ type: "start_static_recording", name: signName.trim() });
   }
 
@@ -1201,7 +635,6 @@ export default function SignSpeak() {
   async function loadPdfDocument(fileBuffer) {
     const pdfjsLib = await loadPdfJs();
     const doc = await pdfjsLib.getDocument({ data: fileBuffer }).promise;
-
     setPdfDoc(doc);
     setCurrentPage(1);
     renderPage(doc, 1);
@@ -1219,22 +652,16 @@ export default function SignSpeak() {
     const cvs = slideCanvasRef.current;
     cvs.width = vp.width;
     cvs.height = vp.height;
-    await page.render({ canvasContext: cvs.getContext("2d"), viewport: vp })
-      .promise;
+    await page.render({ canvasContext: cvs.getContext("2d"), viewport: vp }).promise;
   }
 
   async function handlePdfLoad(e) {
     const file = e.target.files[0];
-
     if (!file) return;
-
     try {
       const buf = await file.arrayBuffer();
-
       await loadPdfDocument(buf);
-
       setPresentationLoadError("");
-
       setSelectedPresentation(null);
     } catch (_) {
       setPresentationLoadError("Could not load that PDF.");
@@ -1243,72 +670,39 @@ export default function SignSpeak() {
 
   useEffect(() => {
     if (activeTab !== "present" || !selectedPresentation) return;
-
     let cancelled = false;
-
-    const loadSelectedPresentation = async () => {
+    const load = async () => {
       const fileName = selectedPresentation.fileName || "";
-
-      const isPdf = fileName.toLowerCase().endsWith(".pdf");
-
-      if (!isPdf) {
-        if (!cancelled) {
-          setPdfDoc(null);
-
-          setCurrentPage(1);
-
-          setPresentationLoadError(
-            "This presentation type is not supported in viewer yet. Please upload a PDF.",
-          );
-        }
-
+      if (!fileName.toLowerCase().endsWith(".pdf")) {
+        if (!cancelled) { setPdfDoc(null); setCurrentPage(1); setPresentationLoadError("Please upload a PDF."); }
         return;
       }
-
       try {
         const buffer = dataUrlToArrayBuffer(selectedPresentation.fileData);
-
         if (cancelled) return;
-
         await loadPdfDocument(buffer);
-
         if (!cancelled) setPresentationLoadError("");
       } catch (_) {
-        if (!cancelled) {
-          setPdfDoc(null);
-
-          setCurrentPage(1);
-
-          setPresentationLoadError("Could not load the selected presentation.");
-        }
+        if (!cancelled) { setPdfDoc(null); setCurrentPage(1); setPresentationLoadError("Could not load the selected presentation."); }
       }
     };
-
-    loadSelectedPresentation();
-
-    return () => {
-      cancelled = true;
-    };
+    load();
+    return () => { cancelled = true; };
   }, [activeTab, selectedPresentation]);
 
   useEffect(() => {
     if (activeTab !== "present" || !pdfDoc || !slideCanvasRef.current) return;
-
     renderPage(pdfDoc, currentPage);
   }, [activeTab, pdfDoc, currentPage]);
 
   function prevSlide() {
     if (!pdfDoc || currentPage <= 1) return;
-    const p = currentPage - 1;
-    setCurrentPage(p);
-    renderPage(pdfDoc, p);
+    const p = currentPage - 1; setCurrentPage(p); renderPage(pdfDoc, p);
   }
 
   function nextSlide() {
     if (!pdfDoc || currentPage >= pdfDoc.numPages) return;
-    const p = currentPage + 1;
-    setCurrentPage(p);
-    renderPage(pdfDoc, p);
+    const p = currentPage + 1; setCurrentPage(p); renderPage(pdfDoc, p);
   }
 
   // ── KEYBOARD ──────────────────────────────────────────────────
@@ -1317,72 +711,53 @@ export default function SignSpeak() {
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
       if (e.key === "ArrowRight") nextSlide();
       if (e.key === "ArrowLeft") prevSlide();
-      if (e.key === " ") {
-        e.preventDefault();
-        setIsPresenting((p) => !p);
-      }
+      if (e.key === " ") { e.preventDefault(); togglePresenting(); }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [pdfDoc, currentPage]);
+  }, [pdfDoc, currentPage, isPresenting]);
 
   // ── TTS ───────────────────────────────────────────────────────
   function speak(text) {
+    window.speechSynthesis.cancel();
     const utt = new SpeechSynthesisUtterance(text);
-    const v = window.speechSynthesis
-      .getVoices()
-      .find((v) => v.name === selectedVoice);
+    const v = window.speechSynthesis.getVoices().find((v) => v.name === selectedVoice);
     if (v) utt.voice = v;
-    utt.rate = rate;
-    utt.pitch = pitch;
-    utt.volume = volume;
+    utt.rate = rate; utt.pitch = pitch; utt.volume = volume;
     window.speechSynthesis.speak(utt);
   }
 
-  // ─────────────────────────────────────────────────────────────
+  // ── PRESENTING TOGGLE ─────────────────────────────────────────
+  function togglePresenting() {
+    const next = !isPresenting;
+    setIsPresenting(next);
+    if (!next) {
+      sendWs({ type: "reset_cleaner" });
+      window.speechSynthesis.cancel();
+    }
+  }
+
   const showRec = isRecordingStatic || isRecordingDynamic;
 
   return (
     <div className="app">
       {/* HEADER */}
       <header className="header">
-        <div className="logo">
-          Sign<span>Speak</span>
-        </div>
-
+        <div className="logo">Sign<span>Speak</span></div>
         <div className="status-pill">
-          <div
-            className={`status-dot ${wsStatus === "connected" ? "connected" : ""}`}
-          />
+          <div className={`status-dot ${wsStatus === "connected" ? "connected" : ""}`} />
           {wsStatus === "connected" ? "Connected" : "Disconnected"}
         </div>
-
         <div className="header-right">
           {activeTab === "present" && (
             <>
-              <button
-                className="btn btn-default"
-                onClick={() => setVoiceOpen(true)}
-              >
-                Voice
-              </button>
-              <button
-                className="btn btn-default"
-                onClick={() => {
-                  setSignsOpen(true);
-                  sendWs({ type: "get_templates" });
-                }}
-              >
+              <button className="btn btn-default" onClick={() => setVoiceOpen(true)}>Voice</button>
+              <button className="btn btn-default" onClick={() => { setSignsOpen(true); sendWs({ type: "get_templates" }); }}>
                 Saved Signs
               </button>
               <label className="btn btn-primary" style={{ cursor: "pointer" }}>
                 Load PDF
-                <input
-                  className="sr-only"
-                  type="file"
-                  accept=".pdf"
-                  onChange={handlePdfLoad}
-                />
+                <input className="sr-only" type="file" accept=".pdf" onChange={handlePdfLoad} />
               </label>
             </>
           )}
@@ -1391,45 +766,17 @@ export default function SignSpeak() {
 
       {/* TABS */}
       <div className="tabs">
-        <button
-          className={`tab ${activeTab === "dashboard" ? "active" : ""}`}
-          onClick={() => setActiveTab("dashboard")}
-        >
-          Dashboard
-        </button>
-        <button
-          className={`tab ${activeTab === "present" ? "active" : ""}`}
-          onClick={() => setActiveTab("present")}
-        >
-          Present
-        </button>
-        <button
-          className={`tab ${activeTab === "presentations" ? "active" : ""}`}
-          onClick={() => setActiveTab("presentations")}
-        >
-          Presentations
-        </button>
-        <button
-          className={`tab ${activeTab === "speakerProfiles" ? "active" : ""}`}
-          onClick={() => setActiveTab("speakerProfiles")}
-        >
-          Speaker Profiles
-        </button>
-        <button
-          className={`tab ${activeTab === "calibration" ? "active" : ""}`}
-          onClick={() => setActiveTab("calibration")}
-        >
-          Calibration
-        </button>
+        <button className={`tab ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => setActiveTab("dashboard")}>Dashboard</button>
+        <button className={`tab ${activeTab === "present" ? "active" : ""}`} onClick={() => setActiveTab("present")}>Present</button>
+        <button className={`tab ${activeTab === "presentations" ? "active" : ""}`} onClick={() => setActiveTab("presentations")}>Presentations</button>
+        <button className={`tab ${activeTab === "speakerProfiles" ? "active" : ""}`} onClick={() => setActiveTab("speakerProfiles")}>Speaker Profiles</button>
+        <button className={`tab ${activeTab === "calibration" ? "active" : ""}`} onClick={() => setActiveTab("calibration")}>Calibration</button>
       </div>
 
       {activeTab === "dashboard" && (
         <DashboardHome
           onStartPresenting={() => setActiveTab("present")}
-          onNewPresentation={() => {
-            setOpenUploadFlow(true);
-            setActiveTab("presentations");
-          }}
+          onNewPresentation={() => { setOpenUploadFlow(true); setActiveTab("presentations"); }}
         />
       )}
 
@@ -1440,328 +787,185 @@ export default function SignSpeak() {
           availableProfiles={speakerProfiles}
           presentations={presentations}
           setPresentations={setPresentations}
-          onPresentNow={(presentation) => {
-            setSelectedPresentation(presentation);
-            setActiveTab("present");
-          }}
+          onPresentNow={(presentation) => { setSelectedPresentation(presentation); setActiveTab("present"); }}
         />
       )}
 
       {activeTab === "speakerProfiles" && (
-        <SpeakerProfilesPage
-          profiles={speakerProfiles}
-          onProfilesChange={setSpeakerProfiles}
-        />
+        <SpeakerProfilesPage profiles={speakerProfiles} onProfilesChange={setSpeakerProfiles} />
       )}
 
-      {/* MAIN */}
-
-      {activeTab === "present" && (
-
-      <div className="main">
-        {/* LEFT: CAMERA */}
-        <div className="left-panel">
-          <div className="panel-label">
-            <span>Live Feed</span>
-            {handDetected && (
-              <div className="hand-badge">
-                <div className="hand-badge-dot" />
-                Hand detected
-              </div>
-            )}
-          </div>
-
-          <div className="camera-wrap">
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              style={{ display: "none" }}
-            />
-            <canvas ref={canvasRef} className="camera-canvas" />
-
-            {recognized && (
-              <div className={`recog-badge ${recognized ? "show" : ""}`}>
-                {recognized}
-              </div>
-            )}
-
-            {/* Emotion display - now includes neutral */}
-            {currentEmotion && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "10px",
-                  right: "10px",
-                  background: "var(--accent-bg)",
-                  border: "1px solid var(--accent-dim)",
-                  borderRadius: "var(--radius-sm)",
-                  padding: "6px 12px",
-                  fontSize: "12px",
-                  fontFamily: "'Geist Mono', monospace",
-                  color: "var(--accent)",
-                  fontWeight: 500,
-                  boxShadow: "var(--shadow-sm)",
-                }}
-              >
-                {currentEmotion} ({confidence}%)
-              </div>
-            )}
-
-            {!facialRunning && (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "rgba(255,255,255,0.7)",
-                  color: "var(--text2)",
-                  fontSize: "13px",
-                  fontFamily: "'Geist Mono', monospace",
-                }}
-              >
-                Capturing neutral baseline...
-              </div>
-            )}
-
-            {showRec && (
-              <div className="rec-badge">
-                <div className="rec-dot" />
-                {recLabel || "Recording"}
-              </div>
-            )}
-          </div>
-
-          {/* RECORD CONTROLS */}
-          <div className="record-section">
-            <div className="section-title">Record New Sign</div>
-            <input
-              className="input"
-              type="text"
-              placeholder="Sign name (e.g. hello, next…)"
-              value={signName}
-              onChange={(e) => setSignName(e.target.value)}
-            />
-            <div className="record-grid">
-              <button className="btn btn-default" onClick={recordStatic}>
-                📸 Static
-              </button>
-              <button
-                className={`btn ${isRecordingDynamic ? "btn-danger" : "btn-default"}`}
-                onClick={toggleDynamic}
-              >
-                {isRecordingDynamic ? "⏹ Stop" : "⏺ Dynamic"}
-              </button>
-            </div>
-          </div>
-
-          {/* Face emotion detection - processes video in background */}
-          <FacialEmotionDetection
-            videoElement={videoRef.current}
-            onEmotionChange={(emotionData) => {
-              setCurrentEmotion(emotionData);
-            }}
-          />
-        </div>
-
-        {/* RIGHT: SLIDES + CAPTIONS */}
-        <div className="right-panel">
-          <div className="slide-area">
-            {!pdfDoc ? (
-              <div className="upload-empty">
-                <div className="upload-empty-icon">
-                  <CameraIcon />
+      {/* PRESENT TAB */}
+      <div className="main" style={{ display: activeTab === "present" ? undefined : "none" }}>
+          {/* LEFT: CAMERA */}
+          <div className="left-panel">
+            <div className="panel-label">
+              <span>Live Feed</span>
+              {handDetected && (
+                <div className="hand-badge">
+                  <div className="hand-badge-dot" />
+                  Hand detected
                 </div>
-                <h3>Load your presentation</h3>
-                <p>
-                  Upload a PDF to display slides. Use the camera to sign and
-                  speak your content.
-                </p>
-                <label
-                  className="btn btn-primary"
-                  style={{ cursor: "pointer", marginTop: 4 }}
-                >
-                  Choose PDF
-                  <input
-                    className="sr-only"
-                    type="file"
-                    accept=".pdf"
-                    onChange={handlePdfLoad}
-                  />
-                </label>
-              </div>
-            ) : (
-              <canvas ref={slideCanvasRef} className="slide-canvas" />
-            )}
-          </div>
-
-          {/* SLIDE NAV */}
-          <div className="slide-controls">
-            <button
-              className="btn btn-icon"
-              onClick={prevSlide}
-              disabled={!pdfDoc || currentPage <= 1}
-            >
-              <ChevronLeft />
-            </button>
-            <span className="slide-count">
-              {pdfDoc ? `${currentPage} / ${pdfDoc.numPages}` : "— / —"}
-            </span>
-            <button
-              className="btn btn-icon"
-              onClick={nextSlide}
-              disabled={!pdfDoc || currentPage >= (pdfDoc?.numPages ?? 1)}
-            >
-              <ChevronRight />
-            </button>
-            <div className="slide-spacer" />
-            <button
-              className="btn btn-ghost"
-              style={{ fontSize: 12 }}
-              onClick={() => setCaptionWords([])}
-            >
-              Clear captions
-            </button>
-            <div className="divider" />
-            <button
-              className={`btn ${isPresenting ? "btn-danger" : "btn-success"}`}
-              onClick={() => setIsPresenting((p) => !p)}
-            >
-              {isPresenting ? "Stop Presenting" : "Start Presenting"}
-            </button>
-          </div>
-
-          {/* CAPTIONS */}
-          <div className="captions">
-            <span className="cc-label">CC</span>
-            <div className="caption-text">
-              {captionWords.length === 0 ? (
-                <span className="caption-empty">
-                  Captions will appear here as you sign…
-                </span>
-              ) : (
-                captionWords.map((w, i) => (
-                  <span key={i} className="caption-word">
-                    {w}{" "}
-                  </span>
-                ))
               )}
             </div>
+
+            <div className="camera-wrap">
+              <video ref={videoRef} autoPlay muted playsInline style={{ display: "none" }} />
+              <canvas ref={canvasRef} className="camera-canvas" />
+
+              {recognized && (
+                <div className={`recog-badge ${recognized ? "show" : ""}`}>{recognized}</div>
+              )}
+
+              {currentEmotion && (
+                <div style={{
+                  position: "absolute", top: "10px", right: "10px",
+                  background: "var(--accent-bg)", border: "1px solid var(--accent-dim)",
+                  borderRadius: "var(--radius-sm)", padding: "6px 12px",
+                  fontSize: "12px", fontFamily: "'Geist Mono', monospace",
+                  color: "var(--accent)", fontWeight: 500, boxShadow: "var(--shadow-sm)",
+                }}>
+                  {currentEmotion} ({confidence}%)
+                </div>
+              )}
+
+              {!facialRunning && (
+                <div style={{
+                  position: "absolute", inset: 0, display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  background: "rgba(255,255,255,0.7)", color: "var(--text2)",
+                  fontSize: "13px", fontFamily: "'Geist Mono', monospace",
+                }}>
+                  Capturing neutral baseline...
+                </div>
+              )}
+
+              {showRec && (
+                <div className="rec-badge">
+                  <div className="rec-dot" />
+                  {recLabel || "Recording"}
+                </div>
+              )}
+            </div>
+
+            {/* RECORD CONTROLS */}
+            <div className="record-section">
+              <div className="section-title">Record New Sign</div>
+              <input
+                className="input" type="text"
+                placeholder="Sign name (e.g. hello, next…)"
+                value={signName} onChange={(e) => setSignName(e.target.value)}
+              />
+              <div className="record-grid">
+                <button className="btn btn-default" onClick={recordStatic}>📸 Static</button>
+                <button
+                  className={`btn ${isRecordingDynamic ? "btn-danger" : "btn-default"}`}
+                  onClick={toggleDynamic}
+                >
+                  {isRecordingDynamic ? "⏹ Stop" : "⏺ Dynamic"}
+                </button>
+              </div>
+            </div>
+
+            <FacialEmotionDetection
+              videoElement={videoRef.current}
+              onEmotionChange={() => {}}
+            />
+          </div>
+
+          {/* RIGHT: SLIDES + CAPTIONS */}
+          <div className="right-panel">
+            <div className="slide-area">
+              {!pdfDoc ? (
+                <div className="upload-empty">
+                  <div className="upload-empty-icon"><CameraIcon /></div>
+                  <h3>Load your presentation</h3>
+                  <p>Upload a PDF to display slides. Use the camera to sign and speak your content.</p>
+                  <label className="btn btn-primary" style={{ cursor: "pointer", marginTop: 4 }}>
+                    Choose PDF
+                    <input className="sr-only" type="file" accept=".pdf" onChange={handlePdfLoad} />
+                  </label>
+                </div>
+              ) : (
+                <canvas ref={slideCanvasRef} className="slide-canvas" />
+              )}
+            </div>
+
+            <div className="slide-controls">
+              <button className="btn btn-icon" onClick={prevSlide} disabled={!pdfDoc || currentPage <= 1}>
+                <ChevronLeft />
+              </button>
+              <span className="slide-count">
+                {pdfDoc ? `${currentPage} / ${pdfDoc.numPages}` : "— / —"}
+              </span>
+              <button className="btn btn-icon" onClick={nextSlide} disabled={!pdfDoc || currentPage >= (pdfDoc?.numPages ?? 1)}>
+                <ChevronRight />
+              </button>
+              <div className="slide-spacer" />
+              <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setCaptionWords([])}>
+                Clear captions
+              </button>
+              <div className="divider" />
+              <button
+                className={`btn ${isPresenting ? "btn-danger" : "btn-success"}`}
+                onClick={togglePresenting}
+              >
+                {isPresenting ? "Stop Presenting" : "Start Presenting"}
+              </button>
+            </div>
+
+            <div className="captions">
+              <span className="cc-label">CC</span>
+              <div className="caption-text">
+                {captionWords.length === 0 ? (
+                  <span className="caption-empty">Captions will appear here as you sign…</span>
+                ) : (
+                  captionWords.map((w, i) => (
+                    <span key={i} className="caption-word">{w} </span>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-)}
-
-      {/* CALIBRATION TAB - Rendered separately to avoid interfering with Dashboard video */}
+      {/* CALIBRATION TAB */}
       {activeTab === "calibration" && (
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            overflowX: "hidden",
-            padding: "24px",
-            maxWidth: "800px",
-            margin: "0 auto",
-            width: "100%",
-          }}
-        >
+        <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "24px", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
           <Calibration />
         </div>
       )}
 
-
       {/* VOICE MODAL */}
       {voiceOpen && (
-        <div
-          className="overlay"
-          onClick={(e) => e.target === e.currentTarget && setVoiceOpen(false)}
-        >
+        <div className="overlay" onClick={(e) => e.target === e.currentTarget && setVoiceOpen(false)}>
           <div className="modal">
             <div className="modal-title">Voice Settings</div>
-            <div className="modal-sub">
-              Adjust how SignSpeak reads your signs aloud.
-            </div>
-
+            <div className="modal-sub">Adjust how SignSpeak reads your signs aloud.</div>
             <div className="form-group">
               <label className="form-label">Voice</label>
-              <select
-                className="select"
-                value={selectedVoice}
-                onChange={(e) => setSelectedVoice(e.target.value)}
-              >
-                {voices.map((v) => (
-                  <option key={v.name} value={v.name}>
-                    {v.name} ({v.lang})
-                  </option>
-                ))}
+              <select className="select" value={selectedVoice} onChange={(e) => setSelectedVoice(e.target.value)}>
+                {voices.map((v) => <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>)}
               </select>
             </div>
-
             {[
-              {
-                label: "Speed",
-                val: rate,
-                set: setRate,
-                min: 0.5,
-                max: 2,
-                step: 0.1,
-                fmt: (v) => `${parseFloat(v).toFixed(1)}×`,
-              },
-              {
-                label: "Pitch",
-                val: pitch,
-                set: setPitch,
-                min: 0.5,
-                max: 2,
-                step: 0.1,
-                fmt: (v) => parseFloat(v).toFixed(1),
-              },
-              {
-                label: "Volume",
-                val: volume,
-                set: setVolume,
-                min: 0,
-                max: 1,
-                step: 0.05,
-                fmt: (v) => `${Math.round(v * 100)}%`,
-              },
+              { label: "Speed", val: rate, set: setRate, min: 0.5, max: 2, step: 0.1, fmt: (v) => `${parseFloat(v).toFixed(1)}×` },
+              { label: "Pitch", val: pitch, set: setPitch, min: 0.5, max: 2, step: 0.1, fmt: (v) => parseFloat(v).toFixed(1) },
+              { label: "Volume", val: volume, set: setVolume, min: 0, max: 1, step: 0.05, fmt: (v) => `${Math.round(v * 100)}%` },
             ].map(({ label, val, set, min, max, step, fmt }) => (
               <div className="form-group" key={label}>
                 <label className="form-label">{label}</label>
                 <div className="range-row">
-                  <input
-                    type="range"
-                    min={min}
-                    max={max}
-                    step={step}
-                    value={val}
-                    onChange={(e) => set(parseFloat(e.target.value))}
-                  />
+                  <input type="range" min={min} max={max} step={step} value={val} onChange={(e) => set(parseFloat(e.target.value))} />
                   <span className="range-val">{fmt(val)}</span>
                 </div>
               </div>
             ))}
-
-            <button
-              className="btn btn-default"
-              onClick={() =>
-                speak("Hello, my name is SignSpeak. I am ready to present.")
-              }
-            >
+            <button className="btn btn-default" onClick={() => speak("Hello, my name is SignSpeak. I am ready to present.")}>
               🔊 Test Voice
             </button>
-
             <div className="modal-footer">
-              <button
-                className="btn btn-primary"
-                onClick={() => setVoiceOpen(false)}
-              >
-                Done
-              </button>
+              <button className="btn btn-primary" onClick={() => setVoiceOpen(false)}>Done</button>
             </div>
           </div>
         </div>
@@ -1769,37 +973,27 @@ export default function SignSpeak() {
 
       {/* SIGNS MODAL */}
       {signsOpen && (
-        <div
-          className="overlay"
-          onClick={(e) => e.target === e.currentTarget && setSignsOpen(false)}
-        >
+        <div className="overlay" onClick={(e) => e.target === e.currentTarget && setSignsOpen(false)}>
           <div className="modal">
             <div className="modal-title">Saved Signs</div>
-            <div className="modal-sub">
-              All your recorded gestures and their training status.
-            </div>
-
+            <div className="modal-sub">All your recorded gestures and their training status.</div>
             <div className="template-list">
               {Object.keys(templates).length === 0 ? (
-                <div className="empty-state">
-                  No signs recorded yet. Use the camera panel to get started.
-                </div>
+                <div className="empty-state">No signs recorded yet. Use the camera panel to get started.</div>
               ) : (
                 Object.entries(templates).map(([name, info]) => (
                   <div className="template-row" key={name}>
-                                        <div className="template-left">
+                    <div className="template-left">
                       <div className="template-top">
                         {editingName === name ? (
                           <input
                             className="input"
                             style={{ fontSize: 13, padding: "4px 8px", width: "auto", flex: 1 }}
-                            value={editValue}
-                            autoFocus
+                            value={editValue} autoFocus
                             onChange={(e) => setEditValue(e.target.value)}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter" && editValue.trim()) {
+                              if (e.key === "Enter" && editValue.trim())
                                 sendWs({ type: "rename_template", old_name: name, new_name: editValue.trim() });
-                              }
                               if (e.key === "Escape") setEditingName(null);
                             }}
                           />
@@ -1812,45 +1006,26 @@ export default function SignSpeak() {
                         </span>
                       </div>
                       <TrainingProgress recordings={info.recordings} needed={info.needed} />
-
                     </div>
-
-                                        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                       {editingName === name ? (
                         <>
-                          <button
-                            className="btn btn-primary"
-                            style={{ fontSize: 11, padding: "4px 10px" }}
-                            onClick={() => {
-                              if (editValue.trim()) {
-                                sendWs({ type: "rename_template", old_name: name, new_name: editValue.trim() });
-                              }
-                            }}
-                          >
+                          <button className="btn btn-primary" style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => { if (editValue.trim()) sendWs({ type: "rename_template", old_name: name, new_name: editValue.trim() }); }}>
                             Save
                           </button>
-                          <button
-                            className="btn btn-ghost"
-                            style={{ fontSize: 11, padding: "4px 10px" }}
-                            onClick={() => setEditingName(null)}
-                          >
+                          <button className="btn btn-ghost" style={{ fontSize: 11, padding: "4px 10px" }} onClick={() => setEditingName(null)}>
                             Cancel
                           </button>
                         </>
                       ) : (
                         <>
-                          <button
-                            className="btn btn-default"
-                            style={{ fontSize: 11, padding: "4px 10px" }}
-                            onClick={() => { setEditingName(name); setEditValue(name); }}
-                          >
+                          <button className="btn btn-default" style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => { setEditingName(name); setEditValue(name); }}>
                             Rename
                           </button>
-                          <button
-                            className="btn btn-danger"
-                            style={{ fontSize: 11, padding: "4px 10px" }}
-                            onClick={() => sendWs({ type: "delete_template", name })}
-                          >
+                          <button className="btn btn-danger" style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => sendWs({ type: "delete_template", name })}>
                             Delete
                           </button>
                         </>
@@ -1860,14 +1035,8 @@ export default function SignSpeak() {
                 ))
               )}
             </div>
-
             <div className="modal-footer">
-              <button
-                className="btn btn-primary"
-                onClick={() => setSignsOpen(false)}
-              >
-                Done
-              </button>
+              <button className="btn btn-primary" onClick={() => setSignsOpen(false)}>Done</button>
             </div>
           </div>
         </div>
