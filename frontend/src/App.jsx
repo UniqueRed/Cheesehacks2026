@@ -860,20 +860,18 @@ export default function SignSpeak() {
     confidence,
     isRunning: facialRunning,
   } = useFacialEmotion();
-
+  
   // Track the most recent non-neutral emotion in a ref (so it doesn't get stale)
   const latestNonNeutralEmotionRef = useRef("neutral");
-
+  
   // Update ref when detectedEmotion changes
   useEffect(() => {
     if (detectedEmotion !== "neutral") {
       latestNonNeutralEmotionRef.current = detectedEmotion;
-      console.log(
-        `[App] detectedEmotion changed to: '${detectedEmotion}' (stored in ref)`,
-      );
+      console.log(`[App] detectedEmotion changed to: '${detectedEmotion}' (stored in ref)`);
     }
   }, [detectedEmotion]);
-
+  
   // Debug: log when currentEmotion changes
   useEffect(() => {
     if (currentEmotion !== "neutral") {
@@ -1098,110 +1096,125 @@ export default function SignSpeak() {
     // speak_sentence: backend flushed a full sentence — speak it all at once
     // Only use Gemini TTS audio from backend - no browser TTS fallback
     if (data.type === "speak_sentence" && isPresentingRef.current) {
-      console.log("[Frontend TTS] Received speak_sentence message:", {
+      const messageReceiveTime = performance.now();
+      console.log(`[Frontend TTS TIMING] ⏱️  Received speak_sentence message at ${messageReceiveTime.toFixed(3)}ms:`, {
         text: data.text,
         emotion: data.emotion,
         hasAudio: !!data.audio,
         audioLength: data.audio ? data.audio.length : 0,
-        audioFormat: data.audio_format,
+        audioFormat: data.audio_format
       });
-
+      
       // Only play if audio is provided from backend Gemini TTS
       if (data.audio) {
-        console.log("[Frontend TTS] Audio present, processing...");
+        console.log("[Frontend TTS TIMING] ⏱️  Audio present, starting processing...");
         try {
           // Cancel any currently playing audio
           if (currentAudioRef.current) {
-            console.log("[Frontend TTS] Cancelling previous audio");
+            console.log("[Frontend TTS TIMING] ⏱️  Cancelling previous audio");
             currentAudioRef.current.pause();
             currentAudioRef.current = null;
           }
 
-          console.log("[Frontend TTS] Decoding base64 audio...");
+          const decodeStartTime = performance.now();
+          console.log(`[Frontend TTS TIMING] ⏱️  Starting base64 decode at ${decodeStartTime.toFixed(3)}ms`);
           // Decode base64 audio from Gemini TTS
-          const audioBytes = Uint8Array.from(atob(data.audio), (c) =>
-            c.charCodeAt(0),
-          );
-          console.log(
-            "[Frontend TTS] Decoded audio bytes length:",
-            audioBytes.length,
-          );
-
-          const audioBlob = new Blob([audioBytes], {
-            type: data.audio_format === "mp3" ? "audio/mpeg" : "audio/wav",
+          const audioBytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
+          const decodeEndTime = performance.now();
+          const decodeDuration = decodeEndTime - decodeStartTime;
+          console.log(`[Frontend TTS TIMING] ⏱️  Base64 decode completed at ${decodeEndTime.toFixed(3)}ms - took ${decodeDuration.toFixed(3)}ms`);
+          console.log(`[Frontend TTS TIMING] ⏱️  Decoded audio bytes length: ${audioBytes.length}`);
+          
+          const blobStartTime = performance.now();
+          const audioBlob = new Blob([audioBytes], { 
+            type: data.audio_format === "wav" ? "audio/wav" : data.audio_format === "ogg" ? "audio/ogg" : data.audio_format === "mp3" ? "audio/mpeg" : "audio/wav" 
           });
-          console.log(
-            "[Frontend TTS] Created audio blob, type:",
-            audioBlob.type,
-            "size:",
-            audioBlob.size,
-          );
-
+          const blobEndTime = performance.now();
+          const blobDuration = blobEndTime - blobStartTime;
+          console.log(`[Frontend TTS TIMING] ⏱️  Blob created at ${blobEndTime.toFixed(3)}ms - took ${blobDuration.toFixed(3)}ms`);
+          console.log(`[Frontend TTS TIMING] ⏱️  Blob type: ${audioBlob.type}, size: ${audioBlob.size}`);
+          
+          const urlStartTime = performance.now();
           const audioUrl = URL.createObjectURL(audioBlob);
-          console.log("[Frontend TTS] Created object URL:", audioUrl);
-
+          const urlEndTime = performance.now();
+          const urlDuration = urlEndTime - urlStartTime;
+          console.log(`[Frontend TTS TIMING] ⏱️  Object URL created at ${urlEndTime.toFixed(3)}ms - took ${urlDuration.toFixed(3)}ms`);
+          console.log(`[Frontend TTS TIMING] ⏱️  Object URL: ${audioUrl}`);
+          
+          const audioCreateStartTime = performance.now();
           const audio = new Audio(audioUrl);
-          console.log("[Frontend TTS] Created Audio element");
-
+          const audioCreateEndTime = performance.now();
+          const audioCreateDuration = audioCreateEndTime - audioCreateStartTime;
+          console.log(`[Frontend TTS TIMING] ⏱️  Audio element created at ${audioCreateEndTime.toFixed(3)}ms - took ${audioCreateDuration.toFixed(3)}ms`);
+          
           // Store reference for cancellation
           currentAudioRef.current = audio;
-
-          // Add event listeners for debugging
-          audio.addEventListener("loadstart", () =>
-            console.log("[Frontend TTS] Audio loadstart"),
-          );
-          audio.addEventListener("loadeddata", () =>
-            console.log("[Frontend TTS] Audio loadeddata"),
-          );
-          audio.addEventListener("canplay", () =>
-            console.log("[Frontend TTS] Audio canplay"),
-          );
-          audio.addEventListener("play", () =>
-            console.log("[Frontend TTS] Audio play event"),
-          );
-          audio.addEventListener("error", (e) => {
-            console.error("[Frontend TTS] Audio error:", e);
+          
+          // Add event listeners for debugging with timing
+          audio.addEventListener('loadstart', () => {
+            const time = performance.now();
+            console.log(`[Frontend TTS TIMING] ⏱️  Audio loadstart event at ${time.toFixed(3)}ms`);
+          });
+          audio.addEventListener('loadeddata', () => {
+            const time = performance.now();
+            console.log(`[Frontend TTS TIMING] ⏱️  Audio loadeddata event at ${time.toFixed(3)}ms`);
+          });
+          audio.addEventListener('canplay', () => {
+            const time = performance.now();
+            console.log(`[Frontend TTS TIMING] ⏱️  Audio canplay event at ${time.toFixed(3)}ms`);
+          });
+          audio.addEventListener('canplaythrough', () => {
+            const time = performance.now();
+            console.log(`[Frontend TTS TIMING] ⏱️  Audio canplaythrough event at ${time.toFixed(3)}ms`);
+          });
+          audio.addEventListener('play', () => {
+            const time = performance.now();
+            const totalTime = time - messageReceiveTime;
+            console.log(`[Frontend TTS TIMING] ⏱️  Audio play event at ${time.toFixed(3)}ms`);
+            console.log(`[Frontend TTS TIMING] ⏱️  TOTAL TIME from message receive to play: ${totalTime.toFixed(3)}ms`);
+          });
+          audio.addEventListener('error', (e) => {
+            const time = performance.now();
+            console.error(`[Frontend TTS TIMING] ⏱️  Audio error at ${time.toFixed(3)}ms:`, e);
             console.error("[Frontend TTS] Audio error details:", {
               code: audio.error?.code,
-              message: audio.error?.message,
+              message: audio.error?.message
             });
           });
-
-          console.log("[Frontend TTS] Attempting to play audio...");
-          audio
-            .play()
-            .then(() => {
-              console.log(
-                "[Frontend TTS] Audio play() promise resolved - audio should be playing",
-              );
-            })
-            .catch((err) => {
-              console.error(
-                "[Frontend TTS] Error playing Gemini TTS audio:",
-                err,
-              );
-              currentAudioRef.current = null;
-            });
-
+          
+          const playStartTime = performance.now();
+          console.log(`[Frontend TTS TIMING] ⏱️  Calling audio.play() at ${playStartTime.toFixed(3)}ms`);
+          audio.play().then(() => {
+            const playResolveTime = performance.now();
+            const playDuration = playResolveTime - playStartTime;
+            const totalTime = playResolveTime - messageReceiveTime;
+            console.log(`[Frontend TTS TIMING] ⏱️  Audio play() promise resolved at ${playResolveTime.toFixed(3)}ms - took ${playDuration.toFixed(3)}ms`);
+            console.log(`[Frontend TTS TIMING] ⏱️  TOTAL TIME from message receive to play resolve: ${totalTime.toFixed(3)}ms`);
+            console.log(`[Frontend TTS TIMING] ⏱️  Breakdown: Decode=${decodeDuration.toFixed(3)}ms, Blob=${blobDuration.toFixed(3)}ms, URL=${urlDuration.toFixed(3)}ms, Create=${audioCreateDuration.toFixed(3)}ms, Play=${playDuration.toFixed(3)}ms`);
+          }).catch(err => {
+            const playErrorTime = performance.now();
+            const totalTime = playErrorTime - messageReceiveTime;
+            console.error(`[Frontend TTS TIMING] ⏱️  Error playing audio at ${playErrorTime.toFixed(3)}ms (total: ${totalTime.toFixed(3)}ms):`, err);
+            currentAudioRef.current = null;
+          });
+          
           // Clean up URL and reference after playback
           audio.onended = () => {
-            console.log("[Frontend TTS] Audio playback ended");
+            const endTime = performance.now();
+            const totalTime = endTime - messageReceiveTime;
+            console.log(`[Frontend TTS TIMING] ⏱️  Audio playback ended at ${endTime.toFixed(3)}ms (total duration: ${totalTime.toFixed(3)}ms)`);
             URL.revokeObjectURL(audioUrl);
             currentAudioRef.current = null;
           };
         } catch (err) {
-          console.error(
-            "[Frontend TTS] Error processing Gemini TTS audio:",
-            err,
-          );
+          const errorTime = performance.now();
+          const totalTime = errorTime - messageReceiveTime;
+          console.error(`[Frontend TTS TIMING] ⏱️  Error processing audio at ${errorTime.toFixed(3)}ms (total: ${totalTime.toFixed(3)}ms):`, err);
           console.error("[Frontend TTS] Error stack:", err.stack);
           currentAudioRef.current = null;
         }
       } else {
-        console.warn(
-          "[Frontend TTS] No audio received from backend Gemini TTS for chunk:",
-          data.text,
-        );
+        console.warn("[Frontend TTS] No audio received from backend Gemini TTS for chunk:", data.text);
         console.warn("[Frontend TTS] Message data:", data);
       }
     }
@@ -1286,27 +1299,22 @@ export default function SignSpeak() {
         );
         // Use detectedEmotion if non-neutral, otherwise use the most recent non-neutral from ref, otherwise currentEmotion
         // This prevents losing the emotion when it briefly flickers to neutral
-        const emotionToSend =
-          detectedEmotion !== "neutral"
-            ? detectedEmotion
-            : latestNonNeutralEmotionRef.current !== "neutral"
-              ? latestNonNeutralEmotionRef.current
-              : currentEmotion || "neutral";
-
+        const emotionToSend = detectedEmotion !== "neutral" 
+          ? detectedEmotion 
+          : (latestNonNeutralEmotionRef.current !== "neutral" 
+              ? latestNonNeutralEmotionRef.current 
+              : (currentEmotion || "neutral"));
+        
         // Debug: log emotion being sent (throttled to avoid spam)
         if (emotionToSend !== "neutral") {
-          console.log(
-            `[Frontend Emotion] ✅ Sending NON-NEUTRAL emotion '${emotionToSend}' | detectedEmotion: '${detectedEmotion}' | ref: '${latestNonNeutralEmotionRef.current}' | currentEmotion: '${currentEmotion}'`,
-          );
+          console.log(`[Frontend Emotion] ✅ Sending NON-NEUTRAL emotion '${emotionToSend}' | detectedEmotion: '${detectedEmotion}' | ref: '${latestNonNeutralEmotionRef.current}' | currentEmotion: '${currentEmotion}'`);
         } else if (Math.random() < 0.1) {
-          console.log(
-            `[Frontend Emotion] Sending NEUTRAL | detectedEmotion: '${detectedEmotion}' | ref: '${latestNonNeutralEmotionRef.current}' | currentEmotion: '${currentEmotion}'`,
-          );
+          console.log(`[Frontend Emotion] Sending NEUTRAL | detectedEmotion: '${detectedEmotion}' | ref: '${latestNonNeutralEmotionRef.current}' | currentEmotion: '${currentEmotion}'`);
         }
-        const message = {
-          type: "landmarks",
+        const message = { 
+          type: "landmarks", 
           landmarks: lmData,
-          emotion: emotionToSend,
+          emotion: emotionToSend
         };
         sendWs(message);
       } else {
@@ -1464,10 +1472,6 @@ export default function SignSpeak() {
       if (e.key === " ") {
         e.preventDefault();
         togglePresenting();
-      }
-      if (e.key === "e" || e.key === "E") {
-        e.preventDefault();
-        sendWs({ type: "flush_sentence" });
       }
     }
     window.addEventListener("keydown", onKey);

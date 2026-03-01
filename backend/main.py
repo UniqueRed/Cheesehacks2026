@@ -95,7 +95,12 @@ async def websocket_endpoint(websocket: WebSocket):
         loop.call_soon_threadsafe(word_queue.put_nowait, word)
 
     def on_sentence(text, emotion):
+        import time
+        callback_time = time.time()
+        print(f"[TTS TIMING] ⏱️  on_sentence() callback called at {callback_time:.3f} - text: '{text}', emotion: '{emotion}'")
         loop.call_soon_threadsafe(sentence_queue.put_nowait, (text, emotion))
+        queue_put_time = time.time()
+        print(f"[TTS TIMING] ⏱️  Sentence queued at {queue_put_time:.3f} (took {queue_put_time - callback_time:.3f}s to queue)")
 
     cleaner = StreamCleaner(on_word=on_word, on_sentence=on_sentence, sentence_pause=2.0)
 
@@ -140,34 +145,52 @@ async def websocket_endpoint(websocket: WebSocket):
         """Sends full cleaned sentences for TTS after natural pauses."""
         try:
             while True:
+                import time
+                chunk_start_time = time.time()
                 text, emotion = await sentence_queue.get()
-                print(f"[TTS] Received chunk for synthesis - text: '{text}', emotion: '{emotion}'")
+                queue_receive_time = time.time()
+                print(f"[TTS TIMING] ⏱️  Chunk received from queue at {queue_receive_time:.3f} - text: '{text}', emotion: '{emotion}'")
+                print(f"[TTS TIMING] ⏱️  Time since chunk completion: {queue_receive_time - chunk_start_time:.3f}s")
                 
                 # Synthesize speech with TTS service if available
                 if tts_service:
-                    print(f"[TTS] TTS service is available, starting synthesis...")
+                    print(f"[TTS TIMING] ⏱️  TTS service is available, starting synthesis...")
                     try:
-                        print(f"[TTS] Calling synthesize_speech with text='{text}', emotion='{emotion}'")
+                        tts_start_time = time.time()
+                        print(f"[TTS TIMING] ⏱️  Calling synthesize_speech at {tts_start_time:.3f} with text='{text}', emotion='{emotion}'")
                         audio_data = await tts_service.synthesize_speech(
                             text=text,
                             emotion=emotion
                         )
-                        print(f"[TTS] Synthesis successful! Audio data length: {len(audio_data)} bytes")
+                        tts_end_time = time.time()
+                        tts_duration = tts_end_time - tts_start_time
+                        print(f"[TTS TIMING] ⏱️  Synthesis completed at {tts_end_time:.3f} - took {tts_duration:.3f}s")
+                        print(f"[TTS TIMING] ⏱️  Audio data length: {len(audio_data)} bytes")
                         
                         # Encode audio as base64 for transmission
+                        encode_start_time = time.time()
                         audio_b64 = base64.b64encode(audio_data).decode('utf-8')
-                        print(f"[TTS] Base64 encoded audio length: {len(audio_b64)} characters")
+                        encode_end_time = time.time()
+                        encode_duration = encode_end_time - encode_start_time
+                        print(f"[TTS TIMING] ⏱️  Base64 encoding completed at {encode_end_time:.3f} - took {encode_duration:.3f}s")
+                        print(f"[TTS TIMING] ⏱️  Base64 encoded audio length: {len(audio_b64)} characters")
                         
                         message = {
                             "type": "speak_sentence",
                             "text": text,
                             "emotion": emotion,
                             "audio": audio_b64,
-                            "audio_format": "mp3"
+                            "audio_format": "wav"
                         }
-                        print(f"[TTS] Sending message with audio to frontend (audio field present: {bool(audio_b64)})")
+                        send_start_time = time.time()
+                        print(f"[TTS TIMING] ⏱️  Sending WebSocket message at {send_start_time:.3f} (audio field present: {bool(audio_b64)})")
                         await websocket.send_text(json.dumps(message))
-                        print(f"[TTS] Message sent successfully")
+                        send_end_time = time.time()
+                        send_duration = send_end_time - send_start_time
+                        total_duration = send_end_time - queue_receive_time
+                        print(f"[TTS TIMING] ⏱️  WebSocket send completed at {send_end_time:.3f} - took {send_duration:.3f}s")
+                        print(f"[TTS TIMING] ⏱️  TOTAL TIME from queue receive to send: {total_duration:.3f}s")
+                        print(f"[TTS TIMING] ⏱️  Breakdown: TTS={tts_duration:.3f}s, Encode={encode_duration:.3f}s, Send={send_duration:.3f}s")
                     except Exception as e:
                         print(f"[TTS] TTS synthesis error: {e}")
                         import traceback
@@ -350,6 +373,9 @@ async def websocket_endpoint(websocket: WebSocket):
                     # cleaned output comes back asynchronously via on_sentence
                     current_emotion = state["current_emotion"]
                     print(f"[Emotion] Pushing word '{recognized}' with emotion: '{current_emotion}'")
+                    import time
+                    chunk_complete_time = time.time()
+                    print(f"[TTS TIMING] ⏱️  Chunk completed and pushed to cleaner at {chunk_complete_time:.3f}")
                     cleaner.push(recognized, current_emotion)
 
                 await websocket.send_text(json.dumps(response))
@@ -420,8 +446,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
             elif msg_type == "reset_cleaner":
                 # Presenter stopped — flush whatever is buffered immediately
-                cleaner.force_flush()
-            elif msg_type == "flush_sentence":
                 cleaner.force_flush()
 
     except WebSocketDisconnect:

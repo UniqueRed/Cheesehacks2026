@@ -101,7 +101,7 @@ class TTSService:
         emotion: str = "neutral",
         custom_prompt: Optional[str] = None,
         voice: Optional[str] = None,
-        audio_encoding: texttospeech.AudioEncoding = texttospeech.AudioEncoding.MP3
+        audio_encoding: texttospeech.AudioEncoding = texttospeech.AudioEncoding.LINEAR16
     ) -> bytes:
         """
         Synthesize speech from text with emotion-based styling using Gemini-TTS.
