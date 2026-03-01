@@ -41,7 +41,6 @@ const css = `
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── LAYOUT ─────────────────────────────────────────────────── */
   .app {
     display: flex;
     flex-direction: column;
@@ -68,10 +67,7 @@ const css = `
     letter-spacing: -0.3px;
     color: var(--text);
   }
-
-  .logo span {
-    color: var(--accent);
-  }
+  .logo span { color: var(--accent); }
 
   .status-pill {
     display: flex;
@@ -94,17 +90,12 @@ const css = `
     flex-shrink: 0;
     transition: background 0.3s, box-shadow 0.3s;
   }
-
   .status-dot.connected {
     background: var(--green);
     box-shadow: 0 0 0 2px var(--green-bg);
   }
 
-  .header-right {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+  .header-right { display: flex; gap: 8px; align-items: center; }
 
   /* ── MAIN ────────────────────────────────────────────────────── */
   .main {
@@ -145,7 +136,6 @@ const css = `
     color: var(--green);
     font-size: 10px;
   }
-
   .hand-badge-dot {
     width: 6px;
     height: 6px;
@@ -178,21 +168,6 @@ const css = `
     transform: scaleX(-1);
   }
 
-  .camera-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    color: var(--text3);
-    font-size: 13px;
-    text-align: center;
-    padding: 24px;
-  }
-
-  .camera-placeholder svg {
-    opacity: 0.3;
-  }
-
   .rec-badge {
     position: absolute;
     top: 10px;
@@ -207,9 +182,7 @@ const css = `
     font-size: 11px;
     font-family: 'Geist Mono', monospace;
     color: var(--red);
-    animation: fadeIn 0.2s ease;
   }
-
   .rec-dot {
     width: 7px;
     height: 7px;
@@ -217,7 +190,6 @@ const css = `
     background: var(--red);
     animation: blink 1s step-end infinite;
   }
-
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
   .recog-badge {
@@ -239,7 +211,6 @@ const css = `
     pointer-events: none;
     letter-spacing: 0.3px;
   }
-
   .recog-badge.show {
     opacity: 1;
     transform: translateX(-50%) translateY(-2px);
@@ -261,7 +232,6 @@ const css = `
     letter-spacing: 1px;
     text-transform: uppercase;
     color: var(--text3);
-    margin-bottom: 2px;
   }
 
   .record-grid {
@@ -304,7 +274,6 @@ const css = `
     text-align: center;
     padding: 32px;
   }
-
   .upload-empty-icon {
     width: 64px;
     height: 64px;
@@ -317,14 +286,12 @@ const css = `
     color: var(--accent);
     font-size: 24px;
   }
-
   .upload-empty h3 {
     font-size: 17px;
     font-weight: 500;
     color: var(--text);
     letter-spacing: -0.2px;
   }
-
   .upload-empty p {
     font-size: 13px;
     color: var(--text3);
@@ -351,16 +318,8 @@ const css = `
     text-align: center;
   }
 
-  .slide-spacer {
-    flex: 1;
-  }
-
-  .divider {
-    width: 1px;
-    height: 18px;
-    background: var(--border2);
-    flex-shrink: 0;
-  }
+  .slide-spacer { flex: 1; }
+  .divider { width: 1px; height: 18px; background: var(--border2); flex-shrink: 0; }
 
   /* ── CAPTIONS ────────────────────────────────────────────────── */
   .captions {
@@ -409,10 +368,7 @@ const css = `
     from { opacity: 0; transform: translateY(3px); }
     to { opacity: 1; transform: translateY(0); }
   }
-
-  .caption-word {
-    animation: wordIn 0.18s ease forwards;
-  }
+  .caption-word { animation: wordIn 0.18s ease forwards; }
 
   /* ── BUTTONS ─────────────────────────────────────────────────── */
   .btn {
@@ -431,7 +387,6 @@ const css = `
     white-space: nowrap;
     text-decoration: none;
   }
-
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   .btn-default {
@@ -439,11 +394,7 @@ const css = `
     color: var(--text2);
     border-color: var(--border2);
   }
-  .btn-default:hover:not(:disabled) {
-    background: var(--surface2);
-    border-color: var(--border2);
-    color: var(--text);
-  }
+  .btn-default:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
 
   .btn-primary {
     background: var(--accent);
@@ -457,28 +408,21 @@ const css = `
     color: var(--red);
     border-color: rgba(192, 57, 43, 0.3);
   }
-  .btn-danger:hover:not(:disabled) {
-    background: var(--red-bg);
-  }
+  .btn-danger:hover:not(:disabled) { background: var(--red-bg); }
 
   .btn-success {
     background: transparent;
     color: var(--green);
-    border-color: rgba(63, 192, 43, 0.3);
+    border-color: rgba(58, 125, 90, 0.3);
   }
-  .btn-success:hover:not(:disabled) {
-    background: var(--green-bg);
-  }
+  .btn-success:hover:not(:disabled) { background: var(--green-bg); }
 
   .btn-ghost {
     background: transparent;
     color: var(--text2);
     border-color: transparent;
   }
-  .btn-ghost:hover:not(:disabled) {
-    background: var(--surface2);
-    color: var(--text);
-  }
+  .btn-ghost:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
 
   .btn-icon {
     padding: 7px;
@@ -487,11 +431,7 @@ const css = `
     border-color: var(--border);
     border-radius: var(--radius-sm);
   }
-  .btn-icon:hover:not(:disabled) {
-    background: var(--surface2);
-    border-color: var(--border2);
-    color: var(--text);
-  }
+  .btn-icon:hover:not(:disabled) { background: var(--surface2); border-color: var(--border2); color: var(--text); }
 
   /* ── INPUT ───────────────────────────────────────────────────── */
   .input {
@@ -507,10 +447,7 @@ const css = `
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   .input::placeholder { color: var(--text3); }
-  .input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-bg);
-  }
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
 
   .select {
     width: 100%;
@@ -539,7 +476,6 @@ const css = `
     justify-content: center;
     animation: fadeIn 0.15s ease;
   }
-
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
   .modal {
@@ -547,13 +483,12 @@ const css = `
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     padding: 28px;
-    width: 460px;
+    width: 480px;
     max-height: 80vh;
     overflow-y: auto;
     box-shadow: var(--shadow-lg);
     animation: slideUp 0.2s ease;
   }
-
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -566,14 +501,12 @@ const css = `
     letter-spacing: -0.3px;
     margin-bottom: 4px;
   }
-
   .modal-sub {
     font-size: 13px;
     color: var(--text3);
     font-style: italic;
     margin-bottom: 22px;
   }
-
   .modal-footer {
     display: flex;
     gap: 8px;
@@ -584,7 +517,6 @@ const css = `
   }
 
   .form-group { margin-bottom: 16px; }
-
   .form-label {
     display: block;
     font-family: 'Geist Mono', monospace;
@@ -595,18 +527,8 @@ const css = `
     margin-bottom: 6px;
   }
 
-  .range-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  input[type="range"] {
-    flex: 1;
-    accent-color: var(--accent);
-    cursor: pointer;
-  }
-
+  .range-row { display: flex; align-items: center; gap: 12px; }
+  input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; }
   .range-val {
     font-family: 'Geist Mono', monospace;
     font-size: 11px;
@@ -620,7 +542,7 @@ const css = `
     display: flex;
     flex-direction: column;
     gap: 6px;
-    max-height: 320px;
+    max-height: 360px;
     overflow-y: auto;
   }
 
@@ -635,12 +557,20 @@ const css = `
     gap: 12px;
   }
 
-  .template-info {
+  .template-left {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 6px;
     flex: 1;
     overflow: hidden;
+    min-width: 0;
+  }
+
+  .template-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .template-name {
@@ -662,29 +592,39 @@ const css = `
     white-space: nowrap;
     flex-shrink: 0;
   }
+  .tag-static { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-dim); }
+  .tag-dynamic { background: #edeaf8; color: #6c47c9; border-color: #d6cff0; }
+  .tag-ready { background: var(--green-bg); color: var(--green); border-color: rgba(58,125,90,0.2); }
+  .tag-pending { background: #fef9ec; color: var(--yellow); border-color: rgba(181,131,10,0.2); }
 
-  .tag-static {
-    background: var(--accent-bg);
-    color: var(--accent);
-    border-color: var(--accent-dim);
+  /* ── PROGRESS ────────────────────────────────────────────────── */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .tag-dynamic {
-    background: #edeaf8;
-    color: #6c47c9;
-    border-color: #d6cff0;
+  .progress-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    max-width: 120px;
   }
-
-  .tag-ready {
-    background: var(--green-bg);
-    color: var(--green);
-    border-color: rgba(58, 125, 90, 0.2);
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.3s ease;
   }
+  .progress-fill.full { background: var(--green); }
 
-  .tag-pending {
-    background: #fef9ec;
-    color: var(--yellow);
-    border-color: rgba(181, 131, 10, 0.2);
+  .progress-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    white-space: nowrap;
   }
 
   .empty-state {
@@ -701,17 +641,14 @@ const css = `
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
-  /* ── UTILS ────────────────────────────────────────────────────── */
   .sr-only {
     position: absolute; width: 1px; height: 1px;
     padding: 0; margin: -1px; overflow: hidden;
     clip: rect(0,0,0,0); border: 0;
   }
-
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 `;
 
-// ─── INJECT MEDIAPIPE SCRIPTS ─────────────────────────────────────────────────
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
 function loadScript(src) {
   return new Promise((res, rej) => {
     if (document.querySelector(`script[src="${src}"]`)) return res();
@@ -726,45 +663,63 @@ function loadScript(src) {
 
 async function initMP(videoEl, canvasEl, onResults) {
   await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js");
-  await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js");
-  await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js");
+  await loadScript(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js",
+  );
+  await loadScript(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js",
+  );
 
-  const { Hands, HAND_CONNECTIONS } = window;
-  const { Camera } = window;
-  const { drawConnectors, drawLandmarks } = window;
+  const { Hands, HAND_CONNECTIONS, Camera, drawConnectors, drawLandmarks } =
+    window;
 
   const hands = new Hands({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`,
   });
-  hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.5 });
+  hands.setOptions({
+    maxNumHands: 2,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.5,
+  });
   hands.onResults((results) => {
     const ctx = canvasEl.getContext("2d");
     canvasEl.width = results.image.width;
     canvasEl.height = results.image.height;
     ctx.drawImage(results.image, 0, 0, canvasEl.width, canvasEl.height);
-
     const hasHands = results.multiHandLandmarks?.length > 0;
     if (hasHands) {
       for (const lm of results.multiHandLandmarks) {
-        drawConnectors(ctx, lm, HAND_CONNECTIONS, { color: "rgba(0, 0, 0, 0.7)", lineWidth: 5 });
-        drawLandmarks(ctx, lm, { color: "#e1e1e1", fillColor: "#e1e1e1", lineWidth: 1, radius: 6 });
+        drawConnectors(ctx, lm, HAND_CONNECTIONS, {
+          color: "rgba(0,0,0,0.7)",
+          lineWidth: 5,
+        });
+        drawLandmarks(ctx, lm, {
+          color: "#e1e1e1",
+          fillColor: "#e1e1e1",
+          lineWidth: 1,
+          radius: 6,
+        });
       }
     }
     onResults(results, hasHands);
   });
 
   const camera = new Camera(videoEl, {
-    onFrame: async () => { await hands.send({ image: videoEl }); },
-    width: 640, height: 480
+    onFrame: async () => {
+      await hands.send({ image: videoEl });
+    },
+    width: 640,
+    height: 480,
   });
   camera.start();
-  return camera;
 }
 
-// ─── PDF.JS LOADER ────────────────────────────────────────────────────────────
 async function loadPdfJs() {
   if (window.pdfjsLib) return window.pdfjsLib;
-  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+  await loadScript(
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+  );
   window.pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
   return window.pdfjsLib;
@@ -772,69 +727,111 @@ async function loadPdfJs() {
 
 // ─── ICONS ───────────────────────────────────────────────────────────────────
 const ChevronLeft = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 18l-6-6 6-6"/>
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M15 18l-6-6 6-6" />
   </svg>
 );
 const ChevronRight = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 18l6-6-6-6"/>
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9 18l6-6-6-6" />
   </svg>
 );
-const CameraIcon = () => (
-  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-    <circle cx="12" cy="13" r="4"/>
+const SlidesIcon = () => (
+  <svg
+    width="28"
+    height="28"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+  >
+    <rect x="2" y="3" width="20" height="14" rx="2" />
+    <path d="M8 21h8M12 17v4" />
   </svg>
 );
 
-// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+// ─── TRAINING PROGRESS ───────────────────────────────────────────────────────
+function TrainingProgress({ recordings, needed }) {
+  const pct = Math.min(100, Math.round((recordings / needed) * 100));
+  const full = recordings >= needed;
+  return (
+    <div className="progress-row">
+      <div className="progress-bar">
+        <div
+          className={`progress-fill${full ? " full" : ""}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="progress-label">
+        {recordings} / {needed} examples
+      </span>
+    </div>
+  );
+}
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
 export default function SignSpeak() {
-  // WebSocket
   const [wsStatus, setWsStatus] = useState("disconnected");
   const wsRef = useRef(null);
 
-  // Camera / MediaPipe
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [handDetected, setHandDetected] = useState(false);
   const currentLandmarksRef = useRef(null);
   const landmarkThrottleRef = useRef(0);
 
-  // Recording
   const [signName, setSignName] = useState("");
   const [isRecordingStatic, setIsRecordingStatic] = useState(false);
   const [isRecordingDynamic, setIsRecordingDynamic] = useState(false);
   const [recLabel, setRecLabel] = useState("");
 
-  // Recognition
   const [recognized, setRecognized] = useState("");
   const recognizedTimerRef = useRef(null);
 
-  // Captions
   const [captionWords, setCaptionWords] = useState([]);
 
-  // Presenting / TTS
   const [isPresenting, setIsPresenting] = useState(false);
+  const isPresentingRef = useRef(false);
+  useEffect(() => {
+    isPresentingRef.current = isPresenting;
+  }, [isPresenting]);
 
-  // PDF
   const [pdfDoc, setPdfDoc] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const slideCanvasRef = useRef(null);
 
-  // Modals
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [signsOpen, setSignsOpen] = useState(false);
   const [templates, setTemplates] = useState({});
 
-  // Voice settings
   const [voices, setVoices] = useState([]);
   const [selectedVoice, setSelectedVoice] = useState("");
   const [rate, setRate] = useState(1);
   const [pitch, setPitch] = useState(1);
   const [volume, setVolume] = useState(1);
 
-  // ── STYLES INJECT ─────────────────────────────────────────────
+  const [editingName, setEditingName] = useState(null); // which sign is being edited
+  const [editValue, setEditValue] = useState("");
+
+  // Inject styles
   useEffect(() => {
     const el = document.createElement("style");
     el.textContent = css;
@@ -842,7 +839,7 @@ export default function SignSpeak() {
     return () => el.remove();
   }, []);
 
-  // ── VOICES ────────────────────────────────────────────────────
+  // Voices
   useEffect(() => {
     const load = () => {
       const v = window.speechSynthesis.getVoices();
@@ -853,7 +850,7 @@ export default function SignSpeak() {
     window.speechSynthesis.onvoiceschanged = load;
   }, []);
 
-  // ── WEBSOCKET ─────────────────────────────────────────────────
+  // WebSocket
   const connectWs = useCallback(() => {
     const ws = new WebSocket("ws://localhost:8000/ws");
     wsRef.current = ws;
@@ -862,23 +859,16 @@ export default function SignSpeak() {
       setWsStatus("disconnected");
       setTimeout(connectWs, 2000);
     };
-    ws.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      handleMessage(data);
-    };
+    ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
   }, []);
 
-  useEffect(() => { connectWs(); }, [connectWs]);
-
-  // ── MESSAGE HANDLER ────────────────────────────────────────────
-  const isPresentingRef = useRef(false);
-  useEffect(() => { isPresentingRef.current = isPresenting; }, [isPresenting]);
+  useEffect(() => {
+    connectWs();
+  }, [connectWs]);
 
   function handleMessage(data) {
     if (data.type === "match") {
-      if (data.recording) {
-        setRecLabel(`Recording — ${data.frame_count} frames`);
-      }
+      if (data.recording) setRecLabel(`Recording — ${data.frame_count} frames`);
       if (data.recognized && isPresentingRef.current) {
         showRecog(data.recognized);
         setCaptionWords((w) => [...w, data.recognized]);
@@ -886,34 +876,46 @@ export default function SignSpeak() {
       }
     }
     if (data.type === "recording_started") {
-      setIsRecordingStatic(data.gesture_type === "static" ? true : false);
-      setRecLabel(data.gesture_type === "static" ? "Hold sign steady…" : "Recording dynamic sign…");
+      setRecLabel(
+        data.gesture_type === "static"
+          ? "Hold sign steady…"
+          : "Recording dynamic sign…",
+      );
     }
     if (data.type === "recording_done") {
       setIsRecordingStatic(false);
       setIsRecordingDynamic(false);
       setRecLabel("");
       if (data.success) {
-        const msg = data.ready ? `✓ ${data.name} ready` : `${data.name}: ${data.count}/${data.needed} — record again`;
+        const msg = data.ready
+          ? `✓ ${data.name} ready`
+          : `${data.name}: ${data.count}/${data.needed} — record again`;
         showRecog(msg);
       }
     }
     if (data.type === "templates") setTemplates(data.templates);
     if (data.type === "deleted") sendWs({ type: "get_templates" });
-  }
-
-  function sendWs(payload) {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(payload));
+    if (data.type === "renamed") {
+      setTemplates((prev) => {
+        const next = { ...prev };
+        next[data.new_name] = next[data.old_name];
+        delete next[data.old_name];
+        return next;
+      });
+      setEditingName(null);
     }
   }
 
-  // ── MEDIAPIPE ─────────────────────────────────────────────────
+  function sendWs(payload) {
+    if (wsRef.current?.readyState === WebSocket.OPEN)
+      wsRef.current.send(JSON.stringify(payload));
+  }
+
+  // MediaPipe
   useEffect(() => {
     const vid = videoRef.current;
     const cvs = canvasRef.current;
     if (!vid || !cvs) return;
-
     initMP(vid, cvs, (results, hasHands) => {
       setHandDetected(hasHands);
       if (hasHands) {
@@ -922,7 +924,7 @@ export default function SignSpeak() {
         if (now - landmarkThrottleRef.current < 66) return;
         landmarkThrottleRef.current = now;
         const lmData = results.multiHandLandmarks.map((hand) =>
-          hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z }))
+          hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z })),
         );
         sendWs({ type: "landmarks", landmarks: lmData });
       } else {
@@ -931,17 +933,17 @@ export default function SignSpeak() {
     });
   }, []);
 
-  // ── RECOGNITION BADGE ─────────────────────────────────────────
   function showRecog(text) {
     setRecognized(text);
     clearTimeout(recognizedTimerRef.current);
     recognizedTimerRef.current = setTimeout(() => setRecognized(""), 1600);
   }
 
-  // ── RECORDING ─────────────────────────────────────────────────
+  // Recording
   function recordStatic() {
     if (!signName.trim()) return alert("Enter a sign name first.");
-    if (!currentLandmarksRef.current) return alert("Make sure your hand is visible.");
+    if (!currentLandmarksRef.current)
+      return alert("Make sure your hand is visible.");
     sendWs({ type: "start_static_recording", name: signName.trim() });
   }
 
@@ -955,7 +957,7 @@ export default function SignSpeak() {
     }
   }
 
-  // ── PDF ───────────────────────────────────────────────────────
+  // PDF
   async function handlePdfLoad(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -973,13 +975,14 @@ export default function SignSpeak() {
     if (!container) return;
     const scale = Math.min(
       (container.clientWidth - 48) / page.getViewport({ scale: 1 }).width,
-      (container.clientHeight - 48) / page.getViewport({ scale: 1 }).height
+      (container.clientHeight - 48) / page.getViewport({ scale: 1 }).height,
     );
     const vp = page.getViewport({ scale });
     const cvs = slideCanvasRef.current;
     cvs.width = vp.width;
     cvs.height = vp.height;
-    await page.render({ canvasContext: cvs.getContext("2d"), viewport: vp }).promise;
+    await page.render({ canvasContext: cvs.getContext("2d"), viewport: vp })
+      .promise;
   }
 
   function prevSlide() {
@@ -996,22 +999,27 @@ export default function SignSpeak() {
     renderPage(pdfDoc, p);
   }
 
-  // ── KEYBOARD ──────────────────────────────────────────────────
+  // Keyboard
   useEffect(() => {
     function onKey(e) {
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
       if (e.key === "ArrowRight") nextSlide();
       if (e.key === "ArrowLeft") prevSlide();
-      if (e.key === " ") { e.preventDefault(); setIsPresenting((p) => !p); }
+      if (e.key === " ") {
+        e.preventDefault();
+        setIsPresenting((p) => !p);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [pdfDoc, currentPage]);
 
-  // ── TTS ───────────────────────────────────────────────────────
+  // TTS
   function speak(text) {
     const utt = new SpeechSynthesisUtterance(text);
-    const v = window.speechSynthesis.getVoices().find((v) => v.name === selectedVoice);
+    const v = window.speechSynthesis
+      .getVoices()
+      .find((v) => v.name === selectedVoice);
     if (v) utt.voice = v;
     utt.rate = rate;
     utt.pitch = pitch;
@@ -1019,40 +1027,54 @@ export default function SignSpeak() {
     window.speechSynthesis.speak(utt);
   }
 
-  // ─────────────────────────────────────────────────────────────
   const showRec = isRecordingStatic || isRecordingDynamic;
 
   return (
     <div className="app">
       {/* HEADER */}
       <header className="header">
-        <div className="logo">Sign<span>Speak</span></div>
+        <div className="logo">
+          Sign<span>Speak</span>
+        </div>
 
         <div className="status-pill">
-          <div className={`status-dot ${wsStatus === "connected" ? "connected" : ""}`} />
+          <div
+            className={`status-dot ${wsStatus === "connected" ? "connected" : ""}`}
+          />
           {wsStatus === "connected" ? "Connected" : "Disconnected"}
         </div>
 
         <div className="header-right">
-          <button className="btn btn-default" onClick={() => setVoiceOpen(true)}>
+          <button
+            className="btn btn-default"
+            onClick={() => setVoiceOpen(true)}
+          >
             Voice
           </button>
-          <button className="btn btn-default" onClick={() => {
-            setSignsOpen(true);
-            sendWs({ type: "get_templates" });
-          }}>
+          <button
+            className="btn btn-default"
+            onClick={() => {
+              setSignsOpen(true);
+              sendWs({ type: "get_templates" });
+            }}
+          >
             Saved Signs
           </button>
           <label className="btn btn-primary" style={{ cursor: "pointer" }}>
             Load PDF
-            <input className="sr-only" type="file" accept=".pdf" onChange={handlePdfLoad} />
+            <input
+              className="sr-only"
+              type="file"
+              accept=".pdf"
+              onChange={handlePdfLoad}
+            />
           </label>
         </div>
       </header>
 
       {/* MAIN */}
       <div className="main">
-        {/* LEFT: CAMERA */}
+        {/* LEFT */}
         <div className="left-panel">
           <div className="panel-label">
             <span>Live Feed</span>
@@ -1065,15 +1087,19 @@ export default function SignSpeak() {
           </div>
 
           <div className="camera-wrap">
-            <video ref={videoRef} autoPlay muted playsInline style={{ display: "none" }} />
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              style={{ display: "none" }}
+            />
             <canvas ref={canvasRef} className="camera-canvas" />
-
             {recognized && (
               <div className={`recog-badge ${recognized ? "show" : ""}`}>
                 {recognized}
               </div>
             )}
-
             {showRec && (
               <div className="rec-badge">
                 <div className="rec-dot" />
@@ -1082,7 +1108,6 @@ export default function SignSpeak() {
             )}
           </div>
 
-          {/* RECORD CONTROLS */}
           <div className="record-section">
             <div className="section-title">Record New Sign</div>
             <input
@@ -1106,19 +1131,30 @@ export default function SignSpeak() {
           </div>
         </div>
 
-        {/* RIGHT: SLIDES + CAPTIONS */}
+        {/* RIGHT */}
         <div className="right-panel">
           <div className="slide-area">
             {!pdfDoc ? (
               <div className="upload-empty">
                 <div className="upload-empty-icon">
-                  <CameraIcon />
+                  <SlidesIcon />
                 </div>
                 <h3>Load your presentation</h3>
-                <p>Upload a PDF to display slides. Use the camera to sign and speak your content.</p>
-                <label className="btn btn-primary" style={{ cursor: "pointer", marginTop: 4 }}>
+                <p>
+                  Upload a PDF to display slides. Use the camera to sign and
+                  speak your content.
+                </p>
+                <label
+                  className="btn btn-primary"
+                  style={{ cursor: "pointer", marginTop: 4 }}
+                >
                   Choose PDF
-                  <input className="sr-only" type="file" accept=".pdf" onChange={handlePdfLoad} />
+                  <input
+                    className="sr-only"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handlePdfLoad}
+                  />
                 </label>
               </div>
             ) : (
@@ -1126,15 +1162,22 @@ export default function SignSpeak() {
             )}
           </div>
 
-          {/* SLIDE NAV */}
           <div className="slide-controls">
-            <button className="btn btn-icon" onClick={prevSlide} disabled={!pdfDoc || currentPage <= 1}>
+            <button
+              className="btn btn-icon"
+              onClick={prevSlide}
+              disabled={!pdfDoc || currentPage <= 1}
+            >
               <ChevronLeft />
             </button>
             <span className="slide-count">
               {pdfDoc ? `${currentPage} / ${pdfDoc.numPages}` : "— / —"}
             </span>
-            <button className="btn btn-icon" onClick={nextSlide} disabled={!pdfDoc || currentPage >= (pdfDoc?.numPages ?? 1)}>
+            <button
+              className="btn btn-icon"
+              onClick={nextSlide}
+              disabled={!pdfDoc || currentPage >= (pdfDoc?.numPages ?? 1)}
+            >
               <ChevronRight />
             </button>
             <div className="slide-spacer" />
@@ -1154,15 +1197,18 @@ export default function SignSpeak() {
             </button>
           </div>
 
-          {/* CAPTIONS */}
           <div className="captions">
             <span className="cc-label">CC</span>
             <div className="caption-text">
               {captionWords.length === 0 ? (
-                <span className="caption-empty">Captions will appear here as you sign…</span>
+                <span className="caption-empty">
+                  Captions will appear here as you sign…
+                </span>
               ) : (
                 captionWords.map((w, i) => (
-                  <span key={i} className="caption-word">{w} </span>
+                  <span key={i} className="caption-word">
+                    {w}{" "}
+                  </span>
                 ))
               )}
             </div>
@@ -1172,41 +1218,92 @@ export default function SignSpeak() {
 
       {/* VOICE MODAL */}
       {voiceOpen && (
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && setVoiceOpen(false)}>
+        <div
+          className="overlay"
+          onClick={(e) => e.target === e.currentTarget && setVoiceOpen(false)}
+        >
           <div className="modal">
             <div className="modal-title">Voice Settings</div>
-            <div className="modal-sub">Adjust how SignSpeak reads your signs aloud.</div>
+            <div className="modal-sub">
+              Adjust how SignSpeak reads your signs aloud.
+            </div>
 
             <div className="form-group">
               <label className="form-label">Voice</label>
-              <select className="select" value={selectedVoice} onChange={(e) => setSelectedVoice(e.target.value)}>
+              <select
+                className="select"
+                value={selectedVoice}
+                onChange={(e) => setSelectedVoice(e.target.value)}
+              >
                 {voices.map((v) => (
-                  <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
+                  <option key={v.name} value={v.name}>
+                    {v.name} ({v.lang})
+                  </option>
                 ))}
               </select>
             </div>
 
             {[
-              { label: "Speed", val: rate, set: setRate, min: 0.5, max: 2, step: 0.1, fmt: (v) => `${parseFloat(v).toFixed(1)}×` },
-              { label: "Pitch", val: pitch, set: setPitch, min: 0.5, max: 2, step: 0.1, fmt: (v) => parseFloat(v).toFixed(1) },
-              { label: "Volume", val: volume, set: setVolume, min: 0, max: 1, step: 0.05, fmt: (v) => `${Math.round(v * 100)}%` },
+              {
+                label: "Speed",
+                val: rate,
+                set: setRate,
+                min: 0.5,
+                max: 2,
+                step: 0.1,
+                fmt: (v) => `${parseFloat(v).toFixed(1)}×`,
+              },
+              {
+                label: "Pitch",
+                val: pitch,
+                set: setPitch,
+                min: 0.5,
+                max: 2,
+                step: 0.1,
+                fmt: (v) => parseFloat(v).toFixed(1),
+              },
+              {
+                label: "Volume",
+                val: volume,
+                set: setVolume,
+                min: 0,
+                max: 1,
+                step: 0.05,
+                fmt: (v) => `${Math.round(v * 100)}%`,
+              },
             ].map(({ label, val, set, min, max, step, fmt }) => (
               <div className="form-group" key={label}>
                 <label className="form-label">{label}</label>
                 <div className="range-row">
-                  <input type="range" min={min} max={max} step={step} value={val}
-                    onChange={(e) => set(parseFloat(e.target.value))} />
+                  <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={val}
+                    onChange={(e) => set(parseFloat(e.target.value))}
+                  />
                   <span className="range-val">{fmt(val)}</span>
                 </div>
               </div>
             ))}
 
-            <button className="btn btn-default" onClick={() => speak("Hello, my name is SignSpeak. I am ready to present.")}>
+            <button
+              className="btn btn-default"
+              onClick={() =>
+                speak("Hello, my name is SignSpeak. I am ready to present.")
+              }
+            >
               🔊 Test Voice
             </button>
 
             <div className="modal-footer">
-              <button className="btn btn-primary" onClick={() => setVoiceOpen(false)}>Done</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => setVoiceOpen(false)}
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>
@@ -1214,38 +1311,128 @@ export default function SignSpeak() {
 
       {/* SIGNS MODAL */}
       {signsOpen && (
-        <div className="overlay" onClick={(e) => e.target === e.currentTarget && setSignsOpen(false)}>
+        <div
+          className="overlay"
+          onClick={(e) => e.target === e.currentTarget && setSignsOpen(false)}
+        >
           <div className="modal">
             <div className="modal-title">Saved Signs</div>
-            <div className="modal-sub">All your recorded gestures and their training status.</div>
+            <div className="modal-sub">
+              All your recorded gestures and their training progress.
+            </div>
 
             <div className="template-list">
               {Object.keys(templates).length === 0 ? (
-                <div className="empty-state">No signs recorded yet. Use the camera panel to get started.</div>
+                <div className="empty-state">
+                  No signs recorded yet. Use the camera panel to get started.
+                </div>
               ) : (
                 Object.entries(templates).map(([name, info]) => (
                   <div className="template-row" key={name}>
-                    <div className="template-info">
-                      <span className="template-name">{name}</span>
-                      <span className={`tag tag-${info.type}`}>{info.type}</span>
-                      <span className={`tag ${info.ready ? "tag-ready" : "tag-pending"}`}>
-                        {info.ready ? "✓ ready" : `${info.recordings}/${info.needed}`}
-                      </span>
+                    <div className="template-left">
+                      <div className="template-top">
+                        {editingName === name ? (
+                          <input
+                            className="input"
+                            style={{
+                              fontSize: 13,
+                              padding: "4px 8px",
+                              width: "auto",
+                              flex: 1,
+                            }}
+                            value={editValue}
+                            autoFocus
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && editValue.trim()) {
+                                sendWs({
+                                  type: "rename_template",
+                                  old_name: name,
+                                  new_name: editValue.trim(),
+                                });
+                              }
+                              if (e.key === "Escape") setEditingName(null);
+                            }}
+                          />
+                        ) : (
+                          <span className="template-name">{name}</span>
+                        )}
+                        <span className={`tag tag-${info.type}`}>
+                          {info.type}
+                        </span>
+                        <span
+                          className={`tag ${info.ready ? "tag-ready" : "tag-pending"}`}
+                        >
+                          {info.ready ? "✓ ready" : "training"}
+                        </span>
+                      </div>
+                      <TrainingProgress
+                        recordings={info.recordings}
+                        needed={info.needed}
+                      />
                     </div>
-                    <button
-                      className="btn btn-danger"
-                      style={{ fontSize: 11, padding: "4px 10px" }}
-                      onClick={() => sendWs({ type: "delete_template", name })}
-                    >
-                      Delete
-                    </button>
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                      {editingName === name ? (
+                        <>
+                          <button
+                            className="btn btn-primary"
+                            style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => {
+                              if (editValue.trim()) {
+                                sendWs({
+                                  type: "rename_template",
+                                  old_name: name,
+                                  new_name: editValue.trim(),
+                                });
+                              }
+                            }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="btn btn-ghost"
+                            style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => setEditingName(null)}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            className="btn btn-default"
+                            style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() => {
+                              setEditingName(name);
+                              setEditValue(name);
+                            }}
+                          >
+                            Rename
+                          </button>
+                          <button
+                            className="btn btn-danger"
+                            style={{ fontSize: 11, padding: "4px 10px" }}
+                            onClick={() =>
+                              sendWs({ type: "delete_template", name })
+                            }
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-primary" onClick={() => setSignsOpen(false)}>Done</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => setSignsOpen(false)}
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>

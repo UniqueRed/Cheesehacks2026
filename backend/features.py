@@ -1,123 +1,196 @@
 """
-Extract robust features from hand landmarks.
+features.py — Finger state encoding for robust gesture recognition.
 
-Instead of raw xyz (which changes with hand position/rotation/distance),
-we extract:
-- Angles between finger joints (rotation invariant)
-- Normalized distances between key landmark pairs (scale invariant)
-- Finger extension ratios (bent vs straight)
+Instead of raw xyz coordinates (which vary with distance, position, rotation),
+we encode each hand frame as a compact, normalized descriptor:
 
-These features are much more stable and discriminative for gesture recognition.
+STATIC FEATURES (for static sign matching):
+  - 5 finger extension ratios (0=fully curled, 1=fully extended)
+  - 5 finger curl angles at PIP joint
+  - Thumb-to-fingertip distances (normalized)
+  - Palm facing direction (4 components of normal vector)
+  - Inter-fingertip spread
+
+DYNAMIC FEATURES (per-frame, for sequence DTW):
+  - Same as above but lighter — optimized for temporal comparison
+
+The key insight: all features are normalized so they're invariant to
+hand size, distance from camera, and absolute position in frame.
 """
 
 import numpy as np
 import math
 
 
-def angle_between(v1, v2):
-    """Angle in radians between two 3D vectors."""
-    v1 = np.array(v1)
-    v2 = np.array(v2)
-    cos = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2) + 1e-8)
-    return math.acos(np.clip(cos, -1.0, 1.0))
+def _vec(a, b):
+    return b - a
+
+def _norm(v):
+    n = np.linalg.norm(v)
+    return v / n if n > 1e-6 else v
+
+def _angle(a, b, c):
+    """Angle at vertex b, formed by points a-b-c."""
+    v1 = _norm(a - b)
+    v2 = _norm(c - b)
+    cos = np.clip(np.dot(v1, v2), -1.0, 1.0)
+    return math.acos(cos)
+
+def _pts(landmarks):
+    return np.array([[lm.x, lm.y, lm.z] for lm in landmarks], dtype=np.float32)
+
+
+# Landmark index reference (MediaPipe):
+# 0=wrist, 1=thumb_cmc, 2=thumb_mcp, 3=thumb_ip, 4=thumb_tip
+# 5=index_mcp, 6=index_pip, 7=index_dip, 8=index_tip
+# 9=mid_mcp, 10=mid_pip, 11=mid_dip, 12=mid_tip
+# 13=ring_mcp, 14=ring_pip, 15=ring_dip, 16=ring_tip
+# 17=pinky_mcp, 18=pinky_pip, 19=pinky_dip, 20=pinky_tip
+
+FINGERS = [
+    (2, 3, 4),    # thumb:  mcp, ip, tip
+    (5, 6, 8),    # index:  mcp, pip, tip
+    (9, 10, 12),  # middle: mcp, pip, tip
+    (13, 14, 16), # ring:   mcp, pip, tip
+    (17, 18, 20), # pinky:  mcp, pip, tip
+]
+
+TIPS    = [4, 8, 12, 16, 20]
+MCPS    = [2, 5, 9, 13, 17]
+PIPS    = [3, 6, 10, 14, 18]
 
 
 def extract_features(landmarks, other_hand=None):
     """
-    Extract a robust, invariant feature vector from hand landmarks.
-    landmarks: list of landmark objects with .x, .y, .z
-    Returns a flat numpy array.
+    Full static feature vector for sign matching.
+    Returns a 1D numpy float32 array.
     """
     if not landmarks or len(landmarks) < 21:
         return None
 
-    pts = np.array([(lm.x, lm.y, lm.z) for lm in landmarks])
+    pts = _pts(landmarks)
+    wrist = pts[0].copy()
+    pts -= wrist
 
-    # ── 1. Normalize: center on wrist, scale by palm size ──────────────
-    wrist = pts[0]
-    pts = pts - wrist
-
-    # Palm size = avg distance from wrist to each MCP joint (2,5,9,13,17)
-    mcp_joints = [2, 5, 9, 13, 17]
-    palm_size = np.mean([np.linalg.norm(pts[j]) for j in mcp_joints])
+    # Scale by palm size (wrist to middle MCP)
+    palm_size = np.linalg.norm(pts[9])
     if palm_size < 1e-6:
         return None
-    pts = pts / palm_size
+    pts /= palm_size
 
-    features = []
+    feats = []
 
-    # ── 2. Finger joint angles (15 angles — 3 per finger) ──────────────
-    # Each finger: MCP, PIP, DIP, TIP
-    finger_joints = [
-        [1, 2, 3, 4],    # thumb
-        [5, 6, 7, 8],    # index
-        [9, 10, 11, 12], # middle
-        [13, 14, 15, 16],# ring
-        [17, 18, 19, 20] # pinky
-    ]
+    # ── 1. Finger extension ratios ──────────────────────────────────────
+    # Tip distance from wrist vs MCP distance from wrist
+    # 1.0 = fully extended, ~0.3 = fully curled
+    for mcp_i, pip_i, tip_i in FINGERS:
+        tip_dist = np.linalg.norm(pts[tip_i])
+        mcp_dist = np.linalg.norm(pts[mcp_i])
+        feats.append(tip_dist / (mcp_dist + 1e-6))
 
-    for finger in finger_joints:
-        for i in range(len(finger) - 2):
-            a = pts[finger[i]]
-            b = pts[finger[i+1]]
-            c = pts[finger[i+2]]
-            v1 = a - b
-            v2 = c - b
-            features.append(angle_between(v1, v2))
+    # ── 2. PIP joint angles (how bent is each finger?) ──────────────────
+    for mcp_i, pip_i, tip_i in FINGERS:
+        angle = _angle(pts[mcp_i], pts[pip_i], pts[tip_i])
+        feats.append(angle / math.pi)  # normalize to [0, 1]
 
-    # ── 3. Finger extension ratios (is each finger curled or straight?) ─
-    # Ratio of tip-to-wrist distance vs tip-to-MCP distance
-    for finger in finger_joints:
-        tip = pts[finger[-1]]
-        mcp = pts[finger[1]]
-        tip_dist = np.linalg.norm(tip)
-        mcp_dist = np.linalg.norm(mcp)
-        features.append(tip_dist / (mcp_dist + 1e-8))
-
-    # ── 4. Key landmark pair distances (normalized by palm size) ────────
-    # Thumb tip to each fingertip (important for many signs)
+    # ── 3. Thumb tip to each fingertip distance ─────────────────────────
     thumb_tip = pts[4]
-    for tip_idx in [8, 12, 16, 20]:
-        features.append(np.linalg.norm(thumb_tip - pts[tip_idx]))
+    for tip_i in [8, 12, 16, 20]:
+        feats.append(np.linalg.norm(thumb_tip - pts[tip_i]))
 
-    # Fingertip to fingertip distances
-    tips = [8, 12, 16, 20]
-    for i in range(len(tips)):
-        for j in range(i+1, len(tips)):
-            features.append(np.linalg.norm(pts[tips[i]] - pts[tips[j]]))
+    # ── 4. Adjacent fingertip distances (spread / closeness) ────────────
+    for i in range(len(TIPS) - 1):
+        feats.append(np.linalg.norm(pts[TIPS[i]] - pts[TIPS[i+1]]))
 
-    # ── 5. Fingertip heights (y relative to palm) ───────────────────────
-    palm_normal_y = np.mean(pts[mcp_joints, 1])
-    for tip_idx in [4, 8, 12, 16, 20]:
-        features.append(pts[tip_idx][1] - palm_normal_y)
-
-    # ── 6. Palm orientation (normal vector components) ───────────────────
-    # Cross product of two palm vectors gives orientation
-    v1 = pts[5] - pts[0]   # wrist to index MCP
-    v2 = pts[17] - pts[0]  # wrist to pinky MCP
+    # ── 5. Palm normal vector (orientation) ─────────────────────────────
+    v1 = pts[5]  - pts[0]
+    v2 = pts[17] - pts[0]
     normal = np.cross(v1, v2)
-    norm_mag = np.linalg.norm(normal)
-    if norm_mag > 1e-6:
-        normal = normal / norm_mag
-    features.extend(normal.tolist())
+    n_mag = np.linalg.norm(normal)
+    if n_mag > 1e-6:
+        normal /= n_mag
+    feats.extend(normal.tolist())
 
-    # ── 7. Two-hand relative features ────────────────────────────────────
+    # ── 6. Fingertip heights relative to palm center ────────────────────
+    palm_center_y = np.mean(pts[MCPS, 1])
+    for tip_i in TIPS:
+        feats.append(pts[tip_i][1] - palm_center_y)
+
+    # ── 7. MCP spread (how wide is the hand open?) ──────────────────────
+    mcp_pts = pts[MCPS]
+    feats.append(np.linalg.norm(mcp_pts[0] - mcp_pts[-1]))  # thumb MCP to pinky MCP
+
+    # ── 8. Two-hand relative features ───────────────────────────────────
     if other_hand and len(other_hand) >= 21:
-        other_pts = np.array([(lm.x, lm.y, lm.z) for lm in other_hand])
+        other_pts = _pts(other_hand)
         other_wrist = other_pts[0]
-
-        # Relative wrist position (normalized by palm size of primary hand)
-        rel_wrist = (other_wrist - (wrist + wrist)) / palm_size  # already centered
-        rel_wrist = (other_wrist - landmarks[0].x) / palm_size
-        # Simple: just the raw offset between wrists
-        wrist_offset = other_wrist - np.array([landmarks[0].x, landmarks[0].y, landmarks[0].z])
-        wrist_offset = wrist_offset / palm_size
-        features.extend(wrist_offset.tolist())
-
-        # Distance between wrists
-        features.append(np.linalg.norm(wrist_offset))
+        # Relative wrist position (normalized by primary palm size)
+        rel_wrist = (other_wrist - (wrist + wrist)) / palm_size
+        rel_wrist = other_wrist - np.array([landmarks[0].x, landmarks[0].y, landmarks[0].z])
+        rel_wrist = rel_wrist / palm_size
+        feats.extend(rel_wrist.tolist())
+        feats.append(np.linalg.norm(rel_wrist))
     else:
-        # Pad with zeros for consistency
-        features.extend([0.0, 0.0, 0.0, 0.0])
+        feats.extend([0.0, 0.0, 0.0, 0.0])
 
-    return np.array(features, dtype=np.float32)
+    return np.array(feats, dtype=np.float32)
+
+
+def extract_dynamic_frame(landmarks, other_hand=None):
+    """
+    Lightweight per-frame feature vector for dynamic sign DTW.
+    Focuses on finger states and relative positions — fast to compute,
+    robust for temporal comparison.
+    """
+    if not landmarks or len(landmarks) < 21:
+        return None
+
+    pts = _pts(landmarks)
+    wrist = pts[0].copy()
+    pts -= wrist
+
+    palm_size = np.linalg.norm(pts[9])
+    if palm_size < 1e-6:
+        return None
+    pts /= palm_size
+
+    feats = []
+
+    # Finger extension ratios (5)
+    for mcp_i, pip_i, tip_i in FINGERS:
+        tip_dist = np.linalg.norm(pts[tip_i])
+        mcp_dist = np.linalg.norm(pts[mcp_i])
+        feats.append(tip_dist / (mcp_dist + 1e-6))
+
+    # PIP bend angles (5)
+    for mcp_i, pip_i, tip_i in FINGERS:
+        feats.append(_angle(pts[mcp_i], pts[pip_i], pts[tip_i]) / math.pi)
+
+    # Palm normal (3) — captures rotation/orientation change over time
+    v1 = pts[5]  - pts[0]
+    v2 = pts[17] - pts[0]
+    normal = np.cross(v1, v2)
+    n_mag = np.linalg.norm(normal)
+    if n_mag > 1e-6:
+        normal /= n_mag
+    feats.extend(normal.tolist())
+
+    # Thumb to index tip (1) — key for open/close detection
+    feats.append(np.linalg.norm(pts[4] - pts[8]))
+
+    return np.array(feats, dtype=np.float32)
+
+
+def fingertip_velocity(prev_lms, curr_lms):
+    """
+    Average velocity of the 5 fingertips between two frames.
+    Used for motion onset/offset detection.
+    Both args are lists of landmark objects.
+    """
+    tips = [4, 8, 12, 16, 20]
+    total = 0.0
+    for i in tips:
+        dx = curr_lms[i].x - prev_lms[i].x
+        dy = curr_lms[i].y - prev_lms[i].y
+        total += (dx**2 + dy**2) ** 0.5
+    return total / 5.0
